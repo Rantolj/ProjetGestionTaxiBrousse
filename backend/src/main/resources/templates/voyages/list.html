@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Voyages</title>
+</head>
+<body>
+<h1>Voyages</h1>
+<a href="/voyages/create">Créer</a>
+<table>
+    <thead>
+    <tr><th>ID</th><th>Taxi</th><th>Chauffeur</th><th>Trajet</th><th>Date départ</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="v : ${voyages}">
+        <td th:text="${v.id}"></td>
+        <td th:text="${v.taxiBrousse != null ? v.taxiBrousse.immatriculation : ''}"></td>
+        <td th:text="${v.chauffeur != null ? v.chauffeur.personne.nom : ''}"></td>
+        <td th:text="${v.trajet != null ? v.trajet.nom : ''}"></td>
+        <td th:text="${v.dateDepart}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

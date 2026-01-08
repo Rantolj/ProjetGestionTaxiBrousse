@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer Taxi-brousse</title>
+</head>
+<body>
+<h1>Créer/modifier Taxi-brousse</h1>
+<form th:action="@{/taxibrousses/save}" th:object="${taxi}" method="post">
+    <div>
+        <label>Immatriculation</label>
+        <input type="text" th:field="*{immatriculation}"/>
+    </div>
+    <div>
+        <label>Nombre de places</label>
+        <input type="number" th:field="*{nbrPlaces}"/>
+    </div>
+    <div>
+        <label>Disposition</label>
+        <input type="text" th:field="*{dispositionPlaces}"/>
+    </div>
+    <div>
+        <button type="submit">Enregistrer</button>
+    </div>
+</form>
+</body>
+</html>
