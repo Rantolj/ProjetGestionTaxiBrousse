@@ -20,12 +20,16 @@ public class TaxiBrousseController {
 
     @GetMapping
     public String list(Model model) {
+        model.addAttribute("pageTitle", "Taxi-brousses");
+        model.addAttribute("currentPage", "taxibrousses");
         model.addAttribute("taxis", taxiBrousseRepository.findAll());
         return "taxibrousses/list";
     }
 
     @GetMapping("/create")
     public String createForm(Model model) {
+        model.addAttribute("pageTitle", "Créer Taxi-brousse");
+        model.addAttribute("currentPage", "taxibrousses");
         model.addAttribute("taxi", new TaxiBrousse());
         return "taxibrousses/form";
     }

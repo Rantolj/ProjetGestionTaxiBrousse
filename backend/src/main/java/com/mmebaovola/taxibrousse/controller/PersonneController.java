@@ -20,12 +20,16 @@ public class PersonneController {
 
     @GetMapping
     public String list(Model model) {
+        model.addAttribute("pageTitle", "Personnes");
+        model.addAttribute("currentPage", "personnes");
         model.addAttribute("personnes", personneRepository.findAll());
         return "personnes/list";
     }
 
     @GetMapping("/create")
     public String createForm(Model model) {
+        model.addAttribute("pageTitle", "Créer Personne");
+        model.addAttribute("currentPage", "personnes");
         model.addAttribute("personne", new Personne());
         return "personnes/form";
     }

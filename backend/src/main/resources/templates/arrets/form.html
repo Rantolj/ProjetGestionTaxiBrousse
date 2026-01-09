@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Arrêt</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Formulaire Arrêt</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <form method="POST" action="/arrets/save" class="card p-4">
+                    <div class="mb-3">
+                        <label for="nom" class="form-label">Nom de l'Arrêt</label>
+                        <input type="text" class="form-control" id="nom" name="nom" th:value="${arret?.nom}"
+                               placeholder="Ex: Tana" required>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                        <a href="/arrets" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

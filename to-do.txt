@@ -1,0 +1,36 @@
+Fonctionnalités: 
+Gestion trajets (départ - destination) :
+- CRUD trajets avec points de repos (arrêts) (Ex. Antananarivo - Ambatolampy - Antsirabe): nom + arrêts (misy sens) + durée moyenne
+
+Gestion des arrêts: 
+- CRUD arrêts (Ex. Antananarivo, Majunga, Ambatolampy, ...): nom
+
+Gestion voyages :
+- CRUD voyages: tb + chauffeur + trajet + date heure départ
+
+Gestion chauffeurs
+- CRUD chauffeurs: extend table personne (nom, contact)
+- disponibilité chauffeur: voir si le chauffeur n'est pas attribué à un voyage pour la date donnée
+
+Gestion clients:
+- CRUD clients: extend table personne (nom, contact)
+
+Gestion disponibilité taxi brousse:
+CRUD taxi brousses avec places: matricule
+- catégories: VIP, ... 
+- disponibilité taxibrousse: voir si le tb n'est pas attribué à un voyage pour la date donnée
+
+Gestion réservations:
+CRUD réservations: client + voyage + date de réservation
+=> tonga dia lister-na ny trajet dispo asiana filtre (date heure na moment de la journée: matin, midi, soir)
+=> misafidy point de départ sy arrivée pour une date heure donnée ny voyageur dia jerena hoe misy trajet mandalo amin'iny ve zay vao créer-na ny réservation
+=> voir les places disponibles 
+
+Detail reservation:
+id reservation + tb + numero place
+
+Gestion paiement
+CRUD paiement: reservation + date de paiement + montant payé
+
+Frais:
+trajet + catégories tb + date

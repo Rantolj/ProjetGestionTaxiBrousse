@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Réservation</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Formulaire Réservation</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <form method="POST" action="/reservations/save" class="card p-4">
+                    <input type="hidden" name="id" th:value="${reservation?.id}">
+
+                    <div class="mb-3">
+                        <label for="voyage" class="form-label">Voyage</label>
+                        <select class="form-select" id="voyage" name="voyage.id" required>
+                            <option value="">Sélectionner un voyage</option>
+                            <option th:each="voyage : ${voyages}" th:value="${voyage.id}"
+                                    th:text="${voyage.trajet?.nom + ' - ' + #dates.format(voyage.dateDepart, 'dd/MM/yyyy')}"
+                                    th:selected="${reservation?.voyage?.id == voyage.id}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="client" class="form-label">Client</label>
+                        <select class="form-select" id="client" name="client.id" required>
+                            <option value="">Sélectionner un client</option>
+                            <option th:each="client : ${clients}" th:value="${client.id}"
+                                    th:text="${(client.personne?.nom != null ? client.personne.nom : '') + ' ' + (client.personne?.prenom != null ? client.personne.prenom : '')}"
+                                    th:selected="${reservation?.client?.id == client.id}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="montantTotal" class="form-label">Montant Total</label>
+                        <input type="number" class="form-control" id="montantTotal" name="montantTotal" step="0.01"
+                               th:value="${reservation?.montantTotal}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dateReservation" class="form-label">Date Réservation</label>
+                        <input type="date" class="form-control" id="dateReservation" name="dateReservation"
+                               th:value="${#dates.format(reservation?.dateReservation, 'yyyy-MM-dd')}" required>
+                    </div>
+
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                        <a href="/reservations" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

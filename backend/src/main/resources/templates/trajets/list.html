@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Trajets</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Trajets</h2>
+            <a href="/trajets/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter Trajet
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Distance (km)</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="trajet : ${trajets}">
+                    <td th:text="${trajet.id}"></td>
+                    <td th:text="${trajet.nom}"></td>
+                    <td th:text="${trajet.distance}"></td>
+                    <td>
+                        <a href="#" th:href="@{'/trajets/edit/' + ${trajet.id}}" class="btn btn-sm btn-info">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="#" th:href="@{'/trajets/delete/' + ${trajet.id}}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce trajet ?')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

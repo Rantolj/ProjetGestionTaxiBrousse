@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Paiements</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Paiements</h2>
+            <a href="/paiements/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter Paiement
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Réservation</th>
+                    <th>Montant Payé</th>
+                    <th>Date Paiement</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="paiement : ${paiements}">
+                    <td th:text="${paiement.id}"></td>
+                    <td th:text="${paiement.reservation?.id}"></td>
+                    <td th:text="${paiement.montantPaye}"></td>
+                    <td th:text="${paiement.datePaiement != null 
+                        ? #temporals.format(paiement.datePaiement, 'dd/MM/yyyy') 
+                        : ''}">
+                    </td>
+                    <td>
+                        <a href="#" th:href="@{'/paiements/edit/' + ${paiement.id}}" class="btn btn-sm btn-info">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="#" th:href="@{'/paiements/delete/' + ${paiement.id}}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
