@@ -4,6 +4,7 @@ import com.mmebaovola.taxibrousse.entity.Reservation;
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
+import com.mmebaovola.taxibrousse.repository.DetailsReservationRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +19,14 @@ public class ReservationController {
     private final ReservationRepository reservationRepository;
     private final VoyageRepository voyageRepository;
     private final ClientRepository clientRepository;
+    private final DetailsReservationRepository detailsReservationRepository;
 
     public ReservationController(ReservationRepository reservationRepository, VoyageRepository voyageRepository,
-            ClientRepository clientRepository) {
+            ClientRepository clientRepository, DetailsReservationRepository detailsReservationRepository) {
         this.reservationRepository = reservationRepository;
         this.voyageRepository = voyageRepository;
         this.clientRepository = clientRepository;
+        this.detailsReservationRepository = detailsReservationRepository;
     }
 
     @GetMapping
@@ -61,8 +64,15 @@ public class ReservationController {
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
-        reservationRepository.deleteById(id);
+    public String delete(@PathVariable Long id,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (detailsReservationRepository.existsByReservationId(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Impossible de supprimer cette réservation : elle contient des détails liés.");
+        } else {
+            reservationRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Réservation supprimée avec succès.");
+        }
         return "redirect:/reservations";
     }
 }

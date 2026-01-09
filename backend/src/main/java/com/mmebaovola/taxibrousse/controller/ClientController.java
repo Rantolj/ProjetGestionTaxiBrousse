@@ -3,6 +3,8 @@ package com.mmebaovola.taxibrousse.controller;
 import com.mmebaovola.taxibrousse.entity.Client;
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.PersonneRepository;
+import com.mmebaovola.taxibrousse.repository.ReservationRepository;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +18,13 @@ public class ClientController {
 
     private final ClientRepository clientRepository;
     private final PersonneRepository personneRepository;
+    private final ReservationRepository reservationRepository;
 
-    public ClientController(ClientRepository clientRepository, PersonneRepository personneRepository) {
+    public ClientController(ClientRepository clientRepository, PersonneRepository personneRepository,
+            ReservationRepository reservationRepository) {
         this.clientRepository = clientRepository;
         this.personneRepository = personneRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @GetMapping
@@ -55,8 +60,14 @@ public class ClientController {
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
-        clientRepository.deleteById(id);
+    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        if (reservationRepository.existsByClientId(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Impossible de supprimer ce client : il existe des réservations associées.");
+        } else {
+            clientRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Client supprimé avec succès.");
+        }
         return "redirect:/clients";
     }
 }
