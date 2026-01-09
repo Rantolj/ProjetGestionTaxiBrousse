@@ -10,6 +10,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/voyages")
@@ -30,13 +33,44 @@ public class VoyageController {
         this.taxiBrousseRepository = taxiBrousseRepository;
     }
 
-    @GetMapping
-    public String list(Model model) {
+        @GetMapping
+        public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+        List<Voyage> voyages = voyageRepository.findAll();
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.toLowerCase();
+            voyages = voyages.stream()
+                .filter(v -> {
+                String trajetNom = v.getTrajet() != null && v.getTrajet().getNom() != null
+                    ? v.getTrajet().getNom().toLowerCase()
+                    : "";
+                String chauffeurNom = v.getChauffeur() != null && v.getChauffeur().getPersonne() != null
+                    && v.getChauffeur().getPersonne().getNom() != null
+                        ? v.getChauffeur().getPersonne().getNom().toLowerCase()
+                        : "";
+                String chauffeurPrenom = v.getChauffeur() != null && v.getChauffeur().getPersonne() != null
+                    && v.getChauffeur().getPersonne().getPrenom() != null
+                        ? v.getChauffeur().getPersonne().getPrenom().toLowerCase()
+                        : "";
+                String immatriculation = v.getTaxiBrousse() != null
+                    && v.getTaxiBrousse().getImmatriculation() != null
+                        ? v.getTaxiBrousse().getImmatriculation().toLowerCase()
+                        : "";
+
+                return trajetNom.contains(query)
+                    || chauffeurNom.contains(query)
+                    || chauffeurPrenom.contains(query)
+                    || immatriculation.contains(query);
+                })
+                .toList();
+        }
+
         model.addAttribute("pageTitle", "Voyages");
         model.addAttribute("currentPage", "voyages");
-        model.addAttribute("voyages", voyageRepository.findAll());
+        model.addAttribute("voyages", voyages);
+        model.addAttribute("q", q);
         return "voyages/list";
-    }
+        }
 
     @GetMapping("/create")
     public String createForm(Model model) {

@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/trajets")
@@ -20,10 +23,22 @@ public class TrajetController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
         model.addAttribute("pageTitle", "Trajets");
         model.addAttribute("currentPage", "trajets");
-        model.addAttribute("trajets", trajetRepository.findAll());
+
+        List<Trajet> trajets = trajetRepository.findAll();
+        if (q != null && !q.isBlank()) {
+            String search = q.toLowerCase();
+            trajets = trajets.stream()
+                    .filter(t ->
+                            (t.getNom() != null && t.getNom().toLowerCase().contains(search)) ||
+                            (t.getDistance() != null && String.valueOf(t.getDistance()).contains(search)))
+                    .toList();
+        }
+
+        model.addAttribute("q", q);
+        model.addAttribute("trajets", trajets);
         return "trajets/list";
     }
 

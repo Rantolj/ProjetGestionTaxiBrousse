@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/paiements")
@@ -23,10 +26,34 @@ public class PaiementController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+        List<Paiement> paiements = paiementRepository.findAll();
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.toLowerCase();
+            paiements = paiements.stream()
+                    .filter(p -> {
+                        String clientNom = p.getReservation() != null && p.getReservation().getClient() != null
+                                && p.getReservation().getClient().getPersonne() != null
+                                && p.getReservation().getClient().getPersonne().getNom() != null
+                                        ? p.getReservation().getClient().getPersonne().getNom().toLowerCase()
+                                        : "";
+                        String clientPrenom = p.getReservation() != null && p.getReservation().getClient() != null
+                                && p.getReservation().getClient().getPersonne() != null
+                                && p.getReservation().getClient().getPersonne().getPrenom() != null
+                                        ? p.getReservation().getClient().getPersonne().getPrenom().toLowerCase()
+                                        : "";
+
+                        return clientNom.contains(query)
+                                || clientPrenom.contains(query);
+                    })
+                    .toList();
+        }
+
         model.addAttribute("pageTitle", "Paiements");
         model.addAttribute("currentPage", "paiements");
-        model.addAttribute("paiements", paiementRepository.findAll());
+        model.addAttribute("paiements", paiements);
+        model.addAttribute("q", q);
         return "paiements/list";
     }
 

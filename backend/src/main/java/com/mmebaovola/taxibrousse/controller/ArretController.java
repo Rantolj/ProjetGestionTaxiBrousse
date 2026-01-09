@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/arrets")
@@ -20,10 +23,20 @@ public class ArretController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
         model.addAttribute("pageTitle", "Arrêts");
         model.addAttribute("currentPage", "arrets");
-        model.addAttribute("arrets", arretRepository.findAll());
+
+        List<Arret> arrets = arretRepository.findAll();
+        if (q != null && !q.isBlank()) {
+            String search = q.toLowerCase();
+            arrets = arrets.stream()
+                    .filter(a -> a.getNom() != null && a.getNom().toLowerCase().contains(search))
+                    .toList();
+        }
+
+        model.addAttribute("q", q);
+        model.addAttribute("arrets", arrets);
         return "arrets/list";
     }
 

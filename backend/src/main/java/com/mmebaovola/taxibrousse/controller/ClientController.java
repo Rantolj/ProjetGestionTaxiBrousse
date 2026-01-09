@@ -4,7 +4,10 @@ import com.mmebaovola.taxibrousse.entity.Client;
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.PersonneRepository;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,10 +31,24 @@ public class ClientController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
         model.addAttribute("pageTitle", "Clients");
         model.addAttribute("currentPage", "clients");
-        model.addAttribute("clients", clientRepository.findAll());
+
+        List<Client> clients = clientRepository.findAll();
+        if (q != null && !q.isBlank()) {
+            String search = q.toLowerCase();
+            clients = clients.stream()
+                    .filter(c -> c.getPersonne() != null && (
+                            (c.getPersonne().getNom() != null && c.getPersonne().getNom().toLowerCase().contains(search)) ||
+                            (c.getPersonne().getPrenom() != null && c.getPersonne().getPrenom().toLowerCase().contains(search)) ||
+                            (c.getPersonne().getContact() != null && c.getPersonne().getContact().toLowerCase().contains(search))
+                    ))
+                    .toList();
+        }
+
+        model.addAttribute("q", q);
+        model.addAttribute("clients", clients);
         return "clients/list";
     }
 

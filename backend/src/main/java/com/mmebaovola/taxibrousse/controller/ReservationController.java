@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/reservations")
@@ -29,13 +32,40 @@ public class ReservationController {
         this.detailsReservationRepository = detailsReservationRepository;
     }
 
-    @GetMapping
-    public String list(Model model) {
+        @GetMapping
+        public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+        List<Reservation> reservations = reservationRepository.findAll();
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.toLowerCase();
+            reservations = reservations.stream()
+                .filter(r -> {
+                String clientNom = r.getClient() != null && r.getClient().getPersonne() != null
+                    && r.getClient().getPersonne().getNom() != null
+                        ? r.getClient().getPersonne().getNom().toLowerCase()
+                        : "";
+                String clientPrenom = r.getClient() != null && r.getClient().getPersonne() != null
+                    && r.getClient().getPersonne().getPrenom() != null
+                        ? r.getClient().getPersonne().getPrenom().toLowerCase()
+                        : "";
+                String trajetNom = r.getVoyage() != null && r.getVoyage().getTrajet() != null
+                    && r.getVoyage().getTrajet().getNom() != null
+                        ? r.getVoyage().getTrajet().getNom().toLowerCase()
+                        : "";
+
+                return clientNom.contains(query)
+                    || clientPrenom.contains(query)
+                    || trajetNom.contains(query);
+                })
+                .toList();
+        }
+
         model.addAttribute("pageTitle", "Réservations");
         model.addAttribute("currentPage", "reservations");
-        model.addAttribute("reservations", reservationRepository.findAll());
+        model.addAttribute("reservations", reservations);
+        model.addAttribute("q", q);
         return "reservations/list";
-    }
+        }
 
     @GetMapping("/create")
     public String createForm(Model model) {

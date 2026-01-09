@@ -8,9 +8,15 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0">Trajets</h2>
-            <a href="/trajets/create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Ajouter Trajet
-            </a>
+            <div class="d-flex gap-2">
+                <form method="get" action="/trajets" class="d-flex" role="search">
+                    <input type="search" name="q" class="form-control me-2" placeholder="Rechercher trajet" th:value="${q}">
+                    <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+                </form>
+                <a href="/trajets/create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Ajouter Trajet
+                </a>
+            </div>
         </div>
 
         <div class="table-responsive">

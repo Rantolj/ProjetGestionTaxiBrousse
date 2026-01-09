@@ -8,9 +8,15 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0">Réservations</h2>
-            <a href="/reservations/create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Ajouter Réservation
-            </a>
+            <div class="d-flex gap-2">
+                <form method="get" action="/reservations" class="d-flex" role="search">
+                    <input type="search" name="q" class="form-control me-2" placeholder="Rechercher (client, trajet)" th:value="${q}">
+                    <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+                </form>
+                <a href="/reservations/create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Ajouter Réservation
+                </a>
+            </div>
         </div>
 
         <div th:if="${errorMessage != null}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>

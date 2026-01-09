@@ -7,6 +7,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/taxibrousses")
@@ -19,10 +22,27 @@ public class TaxiBrousseController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+        List<TaxiBrousse> taxis = taxiBrousseRepository.findAll();
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.toLowerCase();
+            taxis = taxis.stream()
+                    .filter(t -> {
+                        String immatriculation = t.getImmatriculation() != null
+                                ? t.getImmatriculation().toLowerCase()
+                                : "";
+                
+
+                        return immatriculation.contains(query);
+                    })
+                    .toList();
+        }
+
         model.addAttribute("pageTitle", "Taxi-brousses");
         model.addAttribute("currentPage", "taxibrousses");
-        model.addAttribute("taxis", taxiBrousseRepository.findAll());
+        model.addAttribute("taxis", taxis);
+        model.addAttribute("q", q);
         return "taxibrousses/list";
     }
 

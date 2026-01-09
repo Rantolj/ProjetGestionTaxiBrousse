@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/chauffeurs")
@@ -23,10 +26,24 @@ public class ChauffeurController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
         model.addAttribute("pageTitle", "Chauffeurs");
         model.addAttribute("currentPage", "chauffeurs");
-        model.addAttribute("chauffeurs", chauffeurRepository.findAll());
+
+        List<Chauffeur> chauffeurs = chauffeurRepository.findAll();
+        if (q != null && !q.isBlank()) {
+            String search = q.toLowerCase();
+            chauffeurs = chauffeurs.stream()
+                    .filter(c -> c.getPersonne() != null && (
+                            (c.getPersonne().getNom() != null && c.getPersonne().getNom().toLowerCase().contains(search)) ||
+                            (c.getPersonne().getPrenom() != null && c.getPersonne().getPrenom().toLowerCase().contains(search)) ||
+                            (c.getPersonne().getContact() != null && c.getPersonne().getContact().toLowerCase().contains(search))
+                    ))
+                    .toList();
+        }
+
+        model.addAttribute("q", q);
+        model.addAttribute("chauffeurs", chauffeurs);
         return "chauffeurs/list";
     }
 
