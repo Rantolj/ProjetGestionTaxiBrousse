@@ -282,6 +282,25 @@ public class ReservationController {
             }
         }
 
+        // Group voyages by trajet + exact dateDepart to present taxis for same logical voyage
+        java.util.Map<String, VoyageGroup> groups = new java.util.LinkedHashMap<>();
+        for (Voyage v : voyagesTrouves) {
+            if (v.getTrajet() == null || v.getDateDepart() == null) continue;
+            String key = v.getTrajet().getId() + "|" + v.getDateDepart().toString();
+            VoyageGroup g = groups.get(key);
+            if (g == null) {
+                g = new VoyageGroup(v.getTrajet(), v.getDateDepart());
+                groups.put(key, g);
+            }
+            // compute reserved seats and available seats for this voyage
+            java.util.List<DetailsReservation> existingDetails = detailsReservationRepository.findByReservation_Voyage_Id(v.getId());
+            int reserved = existingDetails != null ? existingDetails.size() : 0;
+            int capacity = v.getTaxiBrousse() != null && v.getTaxiBrousse().getNbrPlaces() != null ? v.getTaxiBrousse().getNbrPlaces() : 0;
+            int available = Math.max(0, capacity - reserved);
+            g.addOption(new VoyageOption(v, reserved, available, capacity));
+        }
+
+        model.addAttribute("groupedVoyages", groups.values());
         model.addAttribute("voyagesTrouves", voyagesTrouves);
 
         return "reservations/search";
@@ -316,6 +335,64 @@ public class ReservationController {
 
         public boolean isAvailable() {
             return available;
+        }
+    }
+
+    // Helper classes to represent grouped voyages and options (taxi per logical voyage)
+    public static class VoyageOption {
+        private final Voyage voyage;
+        private final int reservedSeats;
+        private final int availableSeats;
+        private final int capacity;
+
+        public VoyageOption(Voyage voyage, int reservedSeats, int availableSeats, int capacity) {
+            this.voyage = voyage;
+            this.reservedSeats = reservedSeats;
+            this.availableSeats = availableSeats;
+            this.capacity = capacity;
+        }
+
+        public Voyage getVoyage() {
+            return voyage;
+        }
+
+        public int getReservedSeats() {
+            return reservedSeats;
+        }
+
+        public int getAvailableSeats() {
+            return availableSeats;
+        }
+
+        public int getCapacity() {
+            return capacity;
+        }
+    }
+
+    public static class VoyageGroup {
+        private final com.mmebaovola.taxibrousse.entity.Trajet trajet;
+        private final java.time.LocalDateTime dateDepart;
+        private final java.util.List<VoyageOption> options = new java.util.ArrayList<>();
+
+        public VoyageGroup(com.mmebaovola.taxibrousse.entity.Trajet trajet, java.time.LocalDateTime dateDepart) {
+            this.trajet = trajet;
+            this.dateDepart = dateDepart;
+        }
+
+        public com.mmebaovola.taxibrousse.entity.Trajet getTrajet() {
+            return trajet;
+        }
+
+        public java.time.LocalDateTime getDateDepart() {
+            return dateDepart;
+        }
+
+        public java.util.List<VoyageOption> getOptions() {
+            return options;
+        }
+
+        public void addOption(VoyageOption opt) {
+            this.options.add(opt);
         }
     }
 }

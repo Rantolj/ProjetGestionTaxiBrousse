@@ -35,3 +35,19 @@ CRUD paiement: reservation + date de paiement + montant payé
 
 Frais:
 trajet + catégories taxibrousse + date
+
+
+
+1. Chercher un voyage par trajets/date/heure
+   "Fasankarana → Ambolomandinika, 14/01, 14h"
+   ↓
+2. Voir les TAXIS disponibles pour ce voyage logique
+   - Taxi 1234-TAB (25 places)
+   - Taxi 5678-TAB (16 places)
+   - Taxi 9012-TAB (28 places)
+   ↓
+3. Choisir un taxi
+   ↓
+4. Choisir une place sur ce taxi
+   ↓
+5. Réserver
