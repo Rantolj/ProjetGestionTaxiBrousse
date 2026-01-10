@@ -4,12 +4,43 @@
       layout:decorate="~{layout}">
 <head>
     <title>Recherche de voyages</title>
+    <style>
+        .search-header {
+            background:url('/images/search-header.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            
+        }
+        
+        .search-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        .search-header h2 {
+            position: relative;
+            z-index: 2;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Recherche de voyages</h2>
+        <div class="search-header">
+            <h2><i class="bi bi-search"></i> Recherche de voyages</h2>
         </div>
 
         <form method="get" action="/reservations/search" class="card p-4 mb-4">
