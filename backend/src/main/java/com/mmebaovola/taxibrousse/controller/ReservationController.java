@@ -282,10 +282,12 @@ public class ReservationController {
             }
         }
 
-        // Group voyages by trajet + exact dateDepart to present taxis for same logical voyage
+        // Group voyages by trajet + exact dateDepart to present taxis for same logical
+        // voyage
         java.util.Map<String, VoyageGroup> groups = new java.util.LinkedHashMap<>();
         for (Voyage v : voyagesTrouves) {
-            if (v.getTrajet() == null || v.getDateDepart() == null) continue;
+            if (v.getTrajet() == null || v.getDateDepart() == null)
+                continue;
             String key = v.getTrajet().getId() + "|" + v.getDateDepart().toString();
             VoyageGroup g = groups.get(key);
             if (g == null) {
@@ -293,9 +295,12 @@ public class ReservationController {
                 groups.put(key, g);
             }
             // compute reserved seats and available seats for this voyage
-            java.util.List<DetailsReservation> existingDetails = detailsReservationRepository.findByReservation_Voyage_Id(v.getId());
+            java.util.List<DetailsReservation> existingDetails = detailsReservationRepository
+                    .findByReservation_Voyage_Id(v.getId());
             int reserved = existingDetails != null ? existingDetails.size() : 0;
-            int capacity = v.getTaxiBrousse() != null && v.getTaxiBrousse().getNbrPlaces() != null ? v.getTaxiBrousse().getNbrPlaces() : 0;
+            int capacity = v.getTaxiBrousse() != null && v.getTaxiBrousse().getNbrPlaces() != null
+                    ? v.getTaxiBrousse().getNbrPlaces()
+                    : 0;
             int available = Math.max(0, capacity - reserved);
             g.addOption(new VoyageOption(v, reserved, available, capacity));
         }
@@ -338,7 +343,8 @@ public class ReservationController {
         }
     }
 
-    // Helper classes to represent grouped voyages and options (taxi per logical voyage)
+    // Helper classes to represent grouped voyages and options (taxi per logical
+    // voyage)
     public static class VoyageOption {
         private final Voyage voyage;
         private final int reservedSeats;
