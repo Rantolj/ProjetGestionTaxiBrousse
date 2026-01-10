@@ -32,7 +32,6 @@ public class TaxiBrousseController {
                         String immatriculation = t.getImmatriculation() != null
                                 ? t.getImmatriculation().toLowerCase()
                                 : "";
-                
 
                         return immatriculation.contains(query);
                     })

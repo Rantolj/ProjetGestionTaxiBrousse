@@ -31,8 +31,7 @@ public class TrajetController {
         if (q != null && !q.isBlank()) {
             String search = q.toLowerCase();
             trajets = trajets.stream()
-                    .filter(t ->
-                            (t.getNom() != null && t.getNom().toLowerCase().contains(search)) ||
+                    .filter(t -> (t.getNom() != null && t.getNom().toLowerCase().contains(search)) ||
                             (t.getDistance() != null && String.valueOf(t.getDistance()).contains(search)))
                     .toList();
         }

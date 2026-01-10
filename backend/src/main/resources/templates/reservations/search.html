@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Recherche de voyages</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Recherche de voyages</h2>
+        </div>
+
+        <form method="get" action="/reservations/search" class="card p-4 mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label for="departId" class="form-label">Point de départ</label>
+                    <select class="form-select" id="departId" name="departId" required>
+                        <option value="">Choisir un arrêt</option>
+                        <option th:each="arret : ${arrets}"
+                                th:value="${arret.id}"
+                                th:text="${arret.nom}"
+                                th:selected="${departId != null and departId == arret.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="arriveeId" class="form-label">Point d'arrivée</label>
+                    <select class="form-select" id="arriveeId" name="arriveeId" required>
+                        <option value="">Choisir un arrêt</option>
+                        <option th:each="arret : ${arrets}"
+                                th:value="${arret.id}"
+                                th:text="${arret.nom}"
+                                th:selected="${arriveeId != null and arriveeId == arret.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" th:value="${selectedDate}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="moment" class="form-label">Moment de la journée</label>
+                    <select class="form-select" id="moment" name="moment">
+                        <option th:value="" th:selected="${selectedMoment == null or selectedMoment == ''}">Toute la journée</option>
+                        <option th:value="MATIN" th:selected="${selectedMoment == 'MATIN'}">Matin</option>
+                        <option th:value="MIDI" th:selected="${selectedMoment == 'MIDI'}">Midi</option>
+                        <option th:value="SOIR" th:selected="${selectedMoment == 'SOIR'}">Soir</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 text-center mt-3">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div th:if="${voyagesTrouves != null}">
+            <div th:if="${#lists.isEmpty(voyagesTrouves)}" class="alert alert-info">
+                Aucun voyage trouvé pour ces critères.
+            </div>
+            <div th:if="${!#lists.isEmpty(voyagesTrouves)}" class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Voyages disponibles</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Trajet</th>
+                                <th>Taxi-brousse</th>
+                                <th>Chauffeur</th>
+                                <th>Date / heure départ</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="voyage : ${voyagesTrouves}">
+                                <td th:text="${voyage.trajet?.nom}"></td>
+                                <td th:text="${voyage.taxiBrousse != null ? voyage.taxiBrousse.immatriculation : ''}"></td>
+                                <td th:text="${voyage.chauffeur != null && voyage.chauffeur.personne != null ? voyage.chauffeur.personne.nom + ' ' + voyage.chauffeur.personne.prenom : ''}"></td>
+                                <td th:text="${#temporals.format(voyage.dateDepart, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td class="text-end">
+                                    <a th:href="@{'/reservations/create'(voyageId=${voyage.id})}" class="btn btn-sm btn-success">
+                                        Réserver
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

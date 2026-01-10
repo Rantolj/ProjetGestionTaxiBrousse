@@ -17,4 +17,6 @@ public class Arret {
     private Long id;
 
     private String nom;
+
+    private Boolean estGare = Boolean.FALSE;
 }

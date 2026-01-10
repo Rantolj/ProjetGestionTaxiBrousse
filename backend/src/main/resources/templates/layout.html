@@ -26,7 +26,7 @@
 
         .sidebar {
             width: 280px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #0319e0 100%);
             color: white;
             padding: 2rem 0;
             overflow-y: auto;
@@ -204,6 +204,9 @@
             </a>
             <a href="/reservations" class="nav-link" th:classappend="${currentPage == 'reservations' ? 'active' : ''}">
                 <i class="bi bi-bookmark"></i> Réservations
+            </a>
+            <a href="/reservations/search" class="nav-link" th:classappend="${currentPage == 'reservations-search' ? 'active' : ''}">
+                <i class="bi bi-search"></i> Recherche de voyages
             </a>
             <a href="/paiements" class="nav-link" th:classappend="${currentPage == 'paiements' ? 'active' : ''}">
                 <i class="bi bi-cash"></i> Paiements

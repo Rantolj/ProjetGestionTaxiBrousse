@@ -9,56 +9,99 @@
 <body>
     <div layout:fragment="content">
         <div class="container-fluid">
-            <!-- Statistics Row -->
-            <div class="row">
+            <!-- Statistics Cards -->
+            <div class="row g-3 mb-4">
                 <div class="col-md-6 col-lg-3">
-                    <div class="stat-card">
-                        <div class="stat-label">Voyages</div>
-                        <div class="stat-number" th:text="${voyagesCount}">0</div>
-                        <small class="text-muted">Total voyages</small>
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Voyages</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${voyagesCount}" style="color: white;">0</h2>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="stat-card">
-                        <div class="stat-label">Réservations</div>
-                        <div class="stat-number" th:text="${reservationsCount}">0</div>
-                        <small class="text-muted">Total réservations</small>
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #e22121 0%, #ece5e5 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Réservations</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${reservationsCount}" style="color: white;">0</h2>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="stat-card">
-                        <div class="stat-label">Taxi-brousses</div>
-                        <div class="stat-number" th:text="${taxis}">0</div>
-                        <small class="text-muted">En service</small>
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Taxi-brousses</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${taxis}" style="color: white;">0</h2>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="stat-card">
-                        <div class="stat-label">Clients</div>
-                        <div class="stat-number" th:text="${clientsCount}">0</div>
-                        <small class="text-muted">Total clients</small>
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Clients</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${clientsCount}" style="color: white;">0</h2>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <h3 style="margin-top: 3rem; margin-bottom: 1.5rem; color: #333; font-weight: 600;">Actions rapides</h3>
-            <div class="dashboard-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                <a href="/personnes/create" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; background: white; border-radius: 12px; text-decoration: none; color: #667eea; transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); font-weight: 500; border: none; cursor: pointer;"
-                   onmouseover="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 4px 20px rgba(102, 126, 234, 0.4)';"
-                   onmouseout="this.style.background='white'; this.style.color='#667eea'; this.style.transform='none'; this.style.boxShadow='0 2px 10px rgba(0, 0, 0, 0.08)';">
-                    <i class="bi bi-person-plus" style="font-size: 2rem; margin-bottom: 0.75rem;"></i> Ajouter Personne
-                </a>
-                <a href="/taxibrousses/create" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; background: white; border-radius: 12px; text-decoration: none; color: #667eea; transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); font-weight: 500; border: none; cursor: pointer;"
-                   onmouseover="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 4px 20px rgba(102, 126, 234, 0.4)';"
-                   onmouseout="this.style.background='white'; this.style.color='#667eea'; this.style.transform='none'; this.style.boxShadow='0 2px 10px rgba(0, 0, 0, 0.08)';">
-                    <i class="bi bi-plus-circle" style="font-size: 2rem; margin-bottom: 0.75rem;"></i> Ajouter Taxi
-                </a>
-                <a href="/voyages/create" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; background: white; border-radius: 12px; text-decoration: none; color: #667eea; transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); font-weight: 500; border: none; cursor: pointer;"
-                   onmouseover="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.style.color='white'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 4px 20px rgba(102, 126, 234, 0.4)';"
-                   onmouseout="this.style.background='white'; this.style.color='#667eea'; this.style.transform='none'; this.style.boxShadow='0 2px 10px rgba(0, 0, 0, 0.08)';">
-                    <i class="bi bi-plus-circle" style="font-size: 2rem; margin-bottom: 0.75rem;"></i> Créer Voyage
-                </a>
+            <div class="row g-3">
+                <!-- Recent Activity -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 fw-semibold">Activité récente</h5>
+                            <div class="table-responsive">
+                                <table class="table table-borderless">
+                                    <thead>
+                                        <tr class="text-muted small">
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="badge bg-primary rounded-pill">Voyage</span></td>
+                                            <td>Tana → Majunga</td>
+                                            <td><span class="badge bg-success">Actif</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-warning rounded-pill">Réservation</span></td>
+                                            <td>Client: Rakoto Jean</td>
+                                            <td><span class="badge bg-info">En attente</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-success rounded-pill">Paiement</span></td>
+                                            <td>25,000 MGA</td>
+                                            <td><span class="badge bg-success">Confirmé</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 fw-semibold">Actions rapides</h5>
+                            <div class="d-grid gap-2">
+                                <a href="/voyages/create" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-plus-circle me-2"></i>Nouveau Voyage
+                                </a>
+                                <a href="/reservations/search" class="btn btn-lg" style="background: linear-gradient(135deg, #0ac210 0%, #e4dbdc 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-search me-2"></i>Rechercher Voyage
+                                </a>
+                                <a href="/clients/create" class="btn btn-lg" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-person-plus me-2"></i>Ajouter Client
+                                </a>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
             </div>
         </div>
     </div>

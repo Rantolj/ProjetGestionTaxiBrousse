@@ -31,14 +31,15 @@ CREATE TABLE IF NOT EXISTS chauffeurs
 
 CREATE TABLE IF NOT EXISTS arrets
 (
-    id  SERIAL PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL -- 'TANA'
+    id       SERIAL PRIMARY KEY,
+    nom      VARCHAR(100) NOT NULL, -- 'TANA'
+    est_gare BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS trajets
 (
     id       SERIAL PRIMARY KEY,
-    nom      VARCHAR(100)   NOT NULL, -- 'TANA - MAJUNGA'
+    nom      VARCHAR(100)   NOT NULL, -- 'TANA - MAJUNGA'q
     distance DECIMAL(10, 2) NOT NULL
 );
 
@@ -115,3 +116,5 @@ CREATE TABLE IF NOT EXISTS configurations
     cle    VARCHAR(100) NOT NULL,
     valeur VARCHAR(255) NOT NULL
 );
+
+

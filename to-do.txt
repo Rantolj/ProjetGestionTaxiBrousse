@@ -22,8 +22,9 @@ CRUD taxi brousses avec places: matricule
 
 Gestion réservations:
 CRUD réservations: client + voyage + date de réservation
-=> tonga dia lister-na ny trajet dispo asiana filtre (date heure na moment de la journée: matin, midi, soir)
-=> misafidy point de départ sy arrivée pour une date heure donnée ny voyageur dia jerena hoe misy trajet mandalo amin'iny ve zay vao créer-na ny réservation
+=> il faut lister les  trajets dispo avec filtre (date heure ou moment de la journée: matin, midi, soir)
+=> On ajoute un point de départ et  arrivée pour une date heure donnée du voyageur 
+et on cherche s'il existe un trajet qui passe par le point de depart et arrive du client apres ca on cree la réservation
 => voir les places disponibles 
 
 Detail reservation:
@@ -33,4 +34,4 @@ Gestion paiement
 CRUD paiement: reservation + date de paiement + montant payé
 
 Frais:
-trajet + catégories tb + date
+trajet + catégories taxibrousse + date

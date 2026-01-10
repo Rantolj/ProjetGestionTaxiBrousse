@@ -30,8 +30,7 @@ public class PersonneController {
         if (q != null && !q.isBlank()) {
             String search = q.toLowerCase();
             personnes = personnes.stream()
-                    .filter(p ->
-                            (p.getNom() != null && p.getNom().toLowerCase().contains(search)) ||
+                    .filter(p -> (p.getNom() != null && p.getNom().toLowerCase().contains(search)) ||
                             (p.getPrenom() != null && p.getPrenom().toLowerCase().contains(search)) ||
                             (p.getContact() != null && p.getContact().toLowerCase().contains(search)))
                     .toList();

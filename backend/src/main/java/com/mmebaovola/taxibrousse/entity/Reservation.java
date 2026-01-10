@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reservations")
@@ -28,4 +30,7 @@ public class Reservation {
     private Double montantTotal;
 
     private LocalDateTime dateReservation;
+
+    @OneToMany(mappedBy = "reservation", fetch = FetchType.EAGER)
+    private List<DetailsReservation> detailsReservations = new ArrayList<>();
 }

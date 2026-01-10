@@ -28,23 +28,40 @@
                 <tr>
                     <th>Voyage</th>
                     <th>Client</th>
+                    <th>Places réservées</th>
                     <th>Montant Total</th>
                     <th>Date Réservation</th>
+                    <th>Taxi Brousse</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="reservation : ${reservations}">
-                    <td th:text="${reservation.voyage?.trajet?.nom}"></td>
-                    <td th:text="${reservation.client != null && reservation.client.personne != null 
-                        ? reservation.client.personne.nom : ''}">
+                    <td>
+                        <span th:text="${reservation.voyage?.trajet?.nom}"></span><br/>
+                        <small class="text-muted" th:if="${reservation.voyage?.dateDepart != null}" 
+                               th:text="${#temporals.format(reservation.voyage.dateDepart, 'dd/MM/yyyy HH:mm')}"></small>
                     </td>
-                    <td th:text="${reservation.montantTotal}"></td>
+                    <td th:text="${reservation.client != null && reservation.client.personne != null 
+                        ? reservation.client.personne.nom + ' ' + (reservation.client.personne.prenom != null ? reservation.client.personne.prenom : '') : ''}">
+                    </td>
+                    <td>
+                        <span th:if="${reservation.detailsReservations != null and !reservation.detailsReservations.isEmpty()}">
+                            <span class="badge bg-primary me-1" th:each="detail : ${reservation.detailsReservations}" 
+                                  th:text="${detail.numeroPlace}"></span>
+                        </span>
+                        <span th:if="${reservation.detailsReservations == null or reservation.detailsReservations.isEmpty()}" 
+                              class="text-muted">-</span>
+                    </td>
+                    <td th:text="${reservation.montantTotal != null ? reservation.montantTotal + ' Ar' : '-'}"></td>
                     <td th:text="${reservation.dateReservation != null 
                         ? #temporals.format(reservation.dateReservation, 'dd/MM/yyyy') 
                         : ''}">
                     </td>
-
+                    <td th:text="${reservation.voyage != null && reservation.voyage.taxiBrousse != null 
+                        ? reservation.voyage.taxiBrousse.immatriculation 
+                        : ''}">
+                    </td>
                     <td>
                         <a href="#" th:href="@{'/reservations/edit/' + ${reservation.id}}" class="btn btn-sm btn-info">
                             <i class="bi bi-pencil"></i>

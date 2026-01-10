@@ -34,11 +34,13 @@ public class ChauffeurController {
         if (q != null && !q.isBlank()) {
             String search = q.toLowerCase();
             chauffeurs = chauffeurs.stream()
-                    .filter(c -> c.getPersonne() != null && (
-                            (c.getPersonne().getNom() != null && c.getPersonne().getNom().toLowerCase().contains(search)) ||
-                            (c.getPersonne().getPrenom() != null && c.getPersonne().getPrenom().toLowerCase().contains(search)) ||
-                            (c.getPersonne().getContact() != null && c.getPersonne().getContact().toLowerCase().contains(search))
-                    ))
+                    .filter(c -> c.getPersonne() != null && ((c.getPersonne().getNom() != null
+                            && c.getPersonne().getNom().toLowerCase().contains(search)) ||
+                            (c.getPersonne().getPrenom() != null
+                                    && c.getPersonne().getPrenom().toLowerCase().contains(search))
+                            ||
+                            (c.getPersonne().getContact() != null
+                                    && c.getPersonne().getContact().toLowerCase().contains(search))))
                     .toList();
         }
 

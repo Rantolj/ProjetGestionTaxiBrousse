@@ -22,23 +22,25 @@ INSERT INTO clients (personne_id) VALUES
 INSERT INTO chauffeurs (personne_id) VALUES
 (6), (7), (8), (9), (10);
 
--- 4. Arrêts
-INSERT INTO arrets (nom) VALUES
-('Antananarivo (Tana)'),
-('Mahajanga (Majunga)'),
-('Toamasina (Tamatave)'),
-('Antsiranana (Diego)'),
-('Fianarantsoa'),
-('Toliara (Tuléar)'),
-('Antsirabe'),
-('Morondava'),
-('Ambatondrazaka'),
-('Sambava');
+-- 4. Arrêts (avec indication si c'est une gare routière)
+INSERT INTO arrets (nom, est_gare) VALUES
+('Gare routière Fasankarana (Tana)', true),
+('Gare routière Majunga', true),
+('Gare routière Ambolomandinika Toamasina', true),
+('Gare routière Diego-Suarez', true),
+('Gare routière Fianarantsoa', true),
+('Gare routière Toliara', true),
+('Antsirabe', false),
+('Morondava', false),
+('Ambatondrazaka', false),
+('Sambava', false),
+('Moramanga', false),
+('Brickaville', false);
 
 -- 5. Trajets
 INSERT INTO trajets (nom, distance) VALUES
 ('Tana - Majunga', 570.0),
-('Tana - Toamasina', 215.0),
+('Fasankarana - Ambolomandinika Toamasina', 365.0),
 ('Tana - Diego', 1100.0),
 ('Tana - Fianarantsoa', 410.0),
 ('Tana - Toliara', 950.0),
@@ -48,14 +50,16 @@ INSERT INTO trajets (nom, distance) VALUES
 -- 6. Trajet_details (arrêts dans l'ordre pour chaque trajet)
 -- Trajet 1: Tana - Majunga (arrêts intermédiaires)
 INSERT INTO trajet_details (trajet_id, arret_id, ordre) VALUES
-(1, 1, 1), -- Tana
+(1, 1, 1), -- Gare Fasankarana (Tana)
 (1, 7, 2), -- Antsirabe
-(1, 2, 3); -- Majunga
+(1, 2, 3); -- Gare Majunga
 
--- Trajet 2: Tana - Toamasina
+-- Trajet 2: Fasankarana - Ambolomandinika Toamasina (la demande du client)
 INSERT INTO trajet_details (trajet_id, arret_id, ordre) VALUES
-(2, 1, 1), -- Tana
-(2, 3, 2); -- Toamasina
+(2, 1, 1), -- Gare routière Fasankarana
+(2, 11, 2), -- Moramanga
+(2, 12, 3), -- Brickaville
+(2, 3, 4); -- Gare routière Ambolomandinika Toamasina
 
 -- Trajet 3: Tana - Diego
 INSERT INTO trajet_details (trajet_id, arret_id, ordre) VALUES
@@ -114,22 +118,31 @@ INSERT INTO frais (trajet_id, categorie_id, montant, date_effective) VALUES
 (7, 2, 35000.00, '2024-01-01'); -- Toamasina-Fianarantsoa VIP
 
 -- 10. Voyages
+-- Un meme voyage (trajet + date/heure) peut etre effectue par PLUSIEURS VOITURES
 INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart) VALUES
-(1, 1, 1, '2024-01-15 08:00:00'), -- Taxi 1, Chauffeur 1, Tana-Majunga
-(2, 2, 2, '2024-01-16 09:00:00'), -- Taxi 2, Chauffeur 2, Tana-Toamasina
-(3, 3, 3, '2024-01-17 07:00:00'), -- Taxi 3, Chauffeur 3, Tana-Diego
-(1, 4, 4, '2024-01-18 10:00:00'), -- Taxi 1, Chauffeur 4, Tana-Fianarantsoa
-(2, 5, 5, '2024-01-19 06:00:00'); -- Taxi 2, Chauffeur 5, Tana-Toliara
+(1, 1, 1, '2026-01-15 08:00:00'), -- Taxi 1, Chauffeur 1, Tana-Majunga
 
--- 11. Réservations
+-- VOYAGE DEMANDE: Fasankarana vers Ambolomandinika le 14 janvier a 14h
+-- 3 voitures differentes font ce meme voyage a la meme heure
+(1, 2, 2, '2026-01-14 14:00:00'), -- Voiture 1 (1234-TAB, 25 places) - Chauffeur 2
+(2, 3, 2, '2026-01-14 14:00:00'), -- Voiture 2 (5678-TAB, 16 places) - Chauffeur 3
+(3, 4, 2, '2026-01-14 14:00:00'), -- Voiture 3 (9012-TAB, 28 places) - Chauffeur 4
+
+-- Autres voyages
+(3, 3, 3, '2026-01-17 07:00:00'), -- Taxi 3, Chauffeur 3, Tana-Diego
+(1, 4, 4, '2026-01-18 10:00:00'), -- Taxi 1, Chauffeur 4, Tana-Fianarantsoa
+(2, 5, 5, '2026-01-19 06:00:00'); -- Taxi 2, Chauffeur 5, Tana-Toliara
+
+-- 11. Reservations
+-- Reservations sur le voyage Fasankarana-Ambolomandinika 14h avec differentes voitures
 INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(1, 1, 25000.00, '2024-01-10 14:00:00'), -- Voyage 1, Client 1
-(1, 2, 25000.00, '2024-01-11 15:00:00'), -- Voyage 1, Client 2
-(2, 3, 22000.00, '2024-01-12 16:00:00'), -- Voyage 2, Client 3
-(3, 4, 60000.00, '2024-01-13 17:00:00'), -- Voyage 3, Client 4
-(4, 5, 28000.00, '2024-01-14 18:00:00'); -- Voyage 4, Client 5
+(1, 1, 25000.00, '2026-01-10 14:00:00'), -- Voyage Tana-Majunga, Client 1
+(2, 2, 15000.00, '2026-01-11 15:00:00'), -- Voyage 14h Voiture 1 (1234-TAB), Client 2
+(3, 3, 15000.00, '2026-01-12 16:00:00'), -- Voyage 14h Voiture 2 (5678-TAB), Client 3
+(4, 4, 15000.00, '2026-01-12 17:00:00'), -- Voyage 14h Voiture 3 (9012-TAB), Client 4
+(5, 5, 60000.00, '2026-01-13 17:00:00'); -- Voyage Tana-Diego, Client 5
 
--- 12. Détails des réservations (places)
+-- 12. Details des reservations (places)
 INSERT INTO details_reservations (reservation_id, numero_place) VALUES
 (1, 'A1'),
 (1, 'A2'),
@@ -140,11 +153,11 @@ INSERT INTO details_reservations (reservation_id, numero_place) VALUES
 
 -- 13. Paiements
 INSERT INTO paiements (reservation_id, montant_paye, date_paiement) VALUES
-(1, 25000.00, '2024-01-10 14:30:00'),
-(2, 25000.00, '2024-01-11 15:30:00'),
-(3, 22000.00, '2024-01-12 16:30:00'),
-(4, 60000.00, '2024-01-13 17:30:00'),
-(5, 28000.00, '2024-01-14 18:30:00');
+(1, 25000.00, '2026-01-10 14:30:00'),
+(2, 25000.00, '2026-01-11 15:30:00'),
+(3, 15000.00, '2026-01-12 16:30:00'),
+(4, 60000.00, '2026-01-13 17:30:00'),
+(5, 28000.00, '2026-01-14 18:30:00');
 
 -- 14. Configurations
 INSERT INTO configurations (cle, valeur) VALUES
