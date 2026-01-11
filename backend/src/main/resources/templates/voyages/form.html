@@ -12,12 +12,12 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Créer/modifier Voyage</h5>
-                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" role="alert">
-                        <ul class="mb-0">
-                            <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
-                        </ul>
-                    </div>
                     <form th:action="@{/voyages/save}" th:object="${voyage}" method="post">
+                        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" role="alert">
+                            <ul class="mb-0">
+                                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+                            </ul>
+                        </div>
                         <div class="mb-3">
                             <label for="dateDepart" class="form-label">Date départ</label>
                             <input type="datetime-local" class="form-control" id="dateDepart" th:field="*{dateDepart}"/>
