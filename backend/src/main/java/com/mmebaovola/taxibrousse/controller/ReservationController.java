@@ -1,0 +1,404 @@
+package com.mmebaovola.taxibrousse.controller;
+
+import com.mmebaovola.taxibrousse.entity.Reservation;
+import com.mmebaovola.taxibrousse.entity.DetailsReservation;
+import com.mmebaovola.taxibrousse.entity.Voyage;
+import com.mmebaovola.taxibrousse.repository.ClientRepository;
+import com.mmebaovola.taxibrousse.repository.ReservationRepository;
+import com.mmebaovola.taxibrousse.repository.VoyageRepository;
+import com.mmebaovola.taxibrousse.repository.DetailsReservationRepository;
+import com.mmebaovola.taxibrousse.repository.ArretRepository;
+import com.mmebaovola.taxibrousse.repository.TrajetDetailRepository;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Controller
+@RequestMapping("/reservations")
+public class ReservationController {
+
+    private final ReservationRepository reservationRepository;
+    private final VoyageRepository voyageRepository;
+    private final ClientRepository clientRepository;
+    private final DetailsReservationRepository detailsReservationRepository;
+    private final ArretRepository arretRepository;
+    private final TrajetDetailRepository trajetDetailRepository;
+
+    public ReservationController(ReservationRepository reservationRepository, VoyageRepository voyageRepository,
+            ClientRepository clientRepository, DetailsReservationRepository detailsReservationRepository,
+            ArretRepository arretRepository, TrajetDetailRepository trajetDetailRepository) {
+        this.reservationRepository = reservationRepository;
+        this.voyageRepository = voyageRepository;
+        this.clientRepository = clientRepository;
+        this.detailsReservationRepository = detailsReservationRepository;
+        this.arretRepository = arretRepository;
+        this.trajetDetailRepository = trajetDetailRepository;
+    }
+
+    @GetMapping
+    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+        List<Reservation> reservations = reservationRepository.findAll();
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.toLowerCase();
+            reservations = reservations.stream()
+                    .filter(r -> {
+                        String clientNom = r.getClient() != null && r.getClient().getPersonne() != null
+                                && r.getClient().getPersonne().getNom() != null
+                                        ? r.getClient().getPersonne().getNom().toLowerCase()
+                                        : "";
+                        String clientPrenom = r.getClient() != null && r.getClient().getPersonne() != null
+                                && r.getClient().getPersonne().getPrenom() != null
+                                        ? r.getClient().getPersonne().getPrenom().toLowerCase()
+                                        : "";
+                        String trajetNom = r.getVoyage() != null && r.getVoyage().getTrajet() != null
+                                && r.getVoyage().getTrajet().getNom() != null
+                                        ? r.getVoyage().getTrajet().getNom().toLowerCase()
+                                        : "";
+                        String taxi_brousse = r.getVoyage() != null && r.getVoyage().getTaxiBrousse() != null
+                                && r.getVoyage().getTaxiBrousse().getImmatriculation() != null
+                                        ? r.getVoyage().getTaxiBrousse().getImmatriculation().toLowerCase()
+                                        : "";
+                        return clientNom.contains(query)
+                                || clientPrenom.contains(query)
+                                || trajetNom.contains(query)
+                                || taxi_brousse.contains(query);
+                    })
+                    .toList();
+        }
+
+        model.addAttribute("pageTitle", "Réservations");
+        model.addAttribute("currentPage", "reservations");
+        model.addAttribute("reservations", reservations);
+        model.addAttribute("q", q);
+        return "reservations/list";
+    }
+
+    @GetMapping("/create")
+    public String createForm(Model model, @RequestParam(name = "voyageId", required = false) Long voyageId) {
+        model.addAttribute("pageTitle", "Créer Réservation");
+        model.addAttribute("currentPage", "reservations");
+
+        Reservation reservation = new Reservation();
+        model.addAttribute("reservation", reservation);
+
+        List<Voyage> voyages = voyageRepository.findAll();
+        model.addAttribute("voyages", voyages);
+        model.addAttribute("clients", clientRepository.findAll());
+
+        Voyage selectedVoyage = null;
+        if (voyageId != null) {
+            selectedVoyage = voyageRepository.findById(voyageId).orElse(null);
+        } else if (!voyages.isEmpty()) {
+            selectedVoyage = voyages.get(0);
+        }
+
+        if (selectedVoyage != null && selectedVoyage.getTaxiBrousse() != null
+                && selectedVoyage.getTaxiBrousse().getDispositionPlaces() != null) {
+            String disposition = selectedVoyage.getTaxiBrousse().getDispositionPlaces();
+            List<DetailsReservation> existingDetails = detailsReservationRepository
+                    .findByReservation_Voyage_Id(selectedVoyage.getId());
+            Set<String> reservedSeats = new HashSet<>();
+            for (DetailsReservation d : existingDetails) {
+                if (d.getNumeroPlace() != null) {
+                    reservedSeats.add(d.getNumeroPlace());
+                }
+            }
+
+            List<List<SeatView>> seatRows = buildSeatMap(disposition, reservedSeats);
+            model.addAttribute("seatRows", seatRows);
+        }
+
+        model.addAttribute("selectedVoyageId", selectedVoyage != null ? selectedVoyage.getId() : null);
+
+        return "reservations/form";
+    }
+
+    @PostMapping("/save")
+    public String save(Reservation reservation,
+            @RequestParam(name = "dateReservationStr") String dateReservationStr,
+            @RequestParam(name = "seatNumbers", required = false) List<String> seatNumbers,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        if (dateReservationStr != null && !dateReservationStr.isBlank()) {
+            LocalDateTime dateTime = LocalDateTime.parse(dateReservationStr);
+            reservation.setDateReservation(dateTime);
+        }
+
+        reservationRepository.save(reservation);
+
+        int placesReservees = 0;
+        if (seatNumbers != null && !seatNumbers.isEmpty()) {
+            for (String seat : seatNumbers) {
+                if (seat != null && !seat.trim().isEmpty()) {
+                    DetailsReservation details = new DetailsReservation();
+                    details.setReservation(reservation);
+                    details.setNumeroPlace(seat.trim());
+                    detailsReservationRepository.save(details);
+                    placesReservees++;
+                }
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s).");
+        return "redirect:/reservations";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable Long id, Model model) {
+        model.addAttribute("pageTitle", "Modifier Réservation");
+        model.addAttribute("currentPage", "reservations");
+        model.addAttribute("reservation", reservationRepository.findById(id).orElse(new Reservation()));
+        model.addAttribute("voyages", voyageRepository.findAll());
+        model.addAttribute("clients", clientRepository.findAll());
+        return "reservations/form";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String delete(@PathVariable Long id,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (detailsReservationRepository.existsByReservationId(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Impossible de supprimer cette réservation : elle contient des détails liés.");
+        } else {
+            reservationRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Réservation supprimée avec succès.");
+        }
+        return "redirect:/reservations";
+    }
+
+    private List<List<SeatView>> buildSeatMap(String disposition, Set<String> reservedSeats) {
+        List<List<SeatView>> rows = new ArrayList<>();
+        if (disposition == null || disposition.isEmpty()) {
+            return rows;
+        }
+
+        String[] rawRows = disposition.split("/");
+        for (int i = 0; i < rawRows.length; i++) {
+            String row = rawRows[i];
+            char rowLetter = (char) ('A' + i);
+            int seatIndexInRow = 0;
+            List<SeatView> seatViews = new ArrayList<>();
+
+            for (int j = 0; j < row.length(); j++) {
+                char c = row.charAt(j);
+                if (c == 'x' || c == 'X') {
+                    seatViews.add(SeatView.walkway());
+                } else if (c == 'o' || c == 'O') {
+                    seatIndexInRow++;
+                    String label = rowLetter + String.valueOf(seatIndexInRow);
+                    boolean reserved = reservedSeats.contains(label);
+                    seatViews.add(SeatView.seat(label, !reserved));
+                } else {
+                    seatViews.add(SeatView.walkway());
+                }
+            }
+
+            rows.add(seatViews);
+        }
+
+        return rows;
+    }
+
+    @GetMapping("/search")
+    public String searchForm(Model model,
+            @RequestParam(name = "departId", required = false) Long departId,
+            @RequestParam(name = "arriveeId", required = false) Long arriveeId,
+            @RequestParam(name = "date", required = false) String date,
+            @RequestParam(name = "moment", required = false) String moment) {
+
+        model.addAttribute("pageTitle", "Recherche de voyages");
+        model.addAttribute("currentPage", "reservations-search");
+        model.addAttribute("arrets", arretRepository.findAll());
+        model.addAttribute("departId", departId);
+        model.addAttribute("arriveeId", arriveeId);
+        model.addAttribute("selectedDate", date);
+        model.addAttribute("selectedMoment", moment);
+
+        List<Voyage> voyagesTrouves = new ArrayList<>();
+
+        if (departId != null && arriveeId != null && date != null && !date.isBlank()) {
+            LocalDate targetDate = LocalDate.parse(date);
+
+            LocalTime start;
+            LocalTime end;
+            if ("MATIN".equalsIgnoreCase(moment)) {
+                start = LocalTime.of(5, 0);
+                end = LocalTime.of(11, 59);
+            } else if ("MIDI".equalsIgnoreCase(moment)) {
+                start = LocalTime.of(12, 0);
+                end = LocalTime.of(14, 0);
+            } else if ("SOIR".equalsIgnoreCase(moment)) {
+                start = LocalTime.of(14, 0);
+                end = LocalTime.of(23, 0);
+            } else {
+                start = LocalTime.MIDNIGHT;
+                end = LocalTime.of(23, 59);
+            }
+
+            LocalDateTime startDateTime = LocalDateTime.of(targetDate, start);
+            LocalDateTime endDateTime = LocalDateTime.of(targetDate, end);
+
+            for (Voyage v : voyageRepository.findAll()) {
+                if (v.getDateDepart() == null || v.getTrajet() == null) {
+                    continue;
+                }
+
+                if (v.getDateDepart().isBefore(startDateTime) || v.getDateDepart().isAfter(endDateTime)) {
+                    continue;
+                }
+
+                var details = trajetDetailRepository.findByTrajetIdOrderByOrdreAsc(v.getTrajet().getId());
+                Integer ordreDepart = null;
+                Integer ordreArrivee = null;
+
+                for (var d : details) {
+                    if (d.getArret() != null && d.getArret().getId() != null) {
+                        if (d.getArret().getId().equals(departId)) {
+                            ordreDepart = d.getOrdre();
+                        }
+                        if (d.getArret().getId().equals(arriveeId)) {
+                            ordreArrivee = d.getOrdre();
+                        }
+                    }
+                }
+
+                if (ordreDepart != null && ordreArrivee != null && ordreDepart < ordreArrivee) {
+                    voyagesTrouves.add(v);
+                }
+            }
+        }
+
+        // Group voyages by trajet + exact dateDepart to present taxis for same logical
+        // voyage
+        java.util.Map<String, VoyageGroup> groups = new java.util.LinkedHashMap<>();
+        for (Voyage v : voyagesTrouves) {
+            if (v.getTrajet() == null || v.getDateDepart() == null)
+                continue;
+            String key = v.getTrajet().getId() + "|" + v.getDateDepart().toString();
+            VoyageGroup g = groups.get(key);
+            if (g == null) {
+                g = new VoyageGroup(v.getTrajet(), v.getDateDepart());
+                groups.put(key, g);
+            }
+            // compute reserved seats and available seats for this voyage
+            java.util.List<DetailsReservation> existingDetails = detailsReservationRepository
+                    .findByReservation_Voyage_Id(v.getId());
+            int reserved = existingDetails != null ? existingDetails.size() : 0;
+            int capacity = v.getTaxiBrousse() != null && v.getTaxiBrousse().getNbrPlaces() != null
+                    ? v.getTaxiBrousse().getNbrPlaces()
+                    : 0;
+            int available = Math.max(0, capacity - reserved);
+            g.addOption(new VoyageOption(v, reserved, available, capacity));
+        }
+
+        model.addAttribute("groupedVoyages", groups.values());
+        model.addAttribute("voyagesTrouves", voyagesTrouves);
+
+        return "reservations/search";
+    }
+
+    public static class SeatView {
+        private final String label;
+        private final boolean seat;
+        private final boolean available;
+
+        private SeatView(String label, boolean seat, boolean available) {
+            this.label = label;
+            this.seat = seat;
+            this.available = available;
+        }
+
+        public static SeatView walkway() {
+            return new SeatView(null, false, false);
+        }
+
+        public static SeatView seat(String label, boolean available) {
+            return new SeatView(label, true, available);
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public boolean isSeat() {
+            return seat;
+        }
+
+        public boolean isAvailable() {
+            return available;
+        }
+    }
+
+    // Helper classes to represent grouped voyages and options (taxi per logical
+    // voyage)
+    public static class VoyageOption {
+        private final Voyage voyage;
+        private final int reservedSeats;
+        private final int availableSeats;
+        private final int capacity;
+
+        public VoyageOption(Voyage voyage, int reservedSeats, int availableSeats, int capacity) {
+            this.voyage = voyage;
+            this.reservedSeats = reservedSeats;
+            this.availableSeats = availableSeats;
+            this.capacity = capacity;
+        }
+
+        public Voyage getVoyage() {
+            return voyage;
+        }
+
+        public int getReservedSeats() {
+            return reservedSeats;
+        }
+
+        public int getAvailableSeats() {
+            return availableSeats;
+        }
+
+        public int getCapacity() {
+            return capacity;
+        }
+    }
+
+    public static class VoyageGroup {
+        private final com.mmebaovola.taxibrousse.entity.Trajet trajet;
+        private final java.time.LocalDateTime dateDepart;
+        private final java.util.List<VoyageOption> options = new java.util.ArrayList<>();
+
+        public VoyageGroup(com.mmebaovola.taxibrousse.entity.Trajet trajet, java.time.LocalDateTime dateDepart) {
+            this.trajet = trajet;
+            this.dateDepart = dateDepart;
+        }
+
+        public com.mmebaovola.taxibrousse.entity.Trajet getTrajet() {
+            return trajet;
+        }
+
+        public java.time.LocalDateTime getDateDepart() {
+            return dateDepart;
+        }
+
+        public java.util.List<VoyageOption> getOptions() {
+            return options;
+        }
+
+        public void addOption(VoyageOption opt) {
+            this.options.add(opt);
+        }
+    }
+}

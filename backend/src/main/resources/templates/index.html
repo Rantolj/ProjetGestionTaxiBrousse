@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      lang="fr">
+<head>
+    <title>Tableau de bord</title>
+    <style>
+        .hero-banner {
+            background:url('/images/dashboard-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-banner h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero-banner p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid">
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <h1>Bienvenue à la Gestion Taxi-Brousse</h1>
+                    <p>Gérez vos voyages, réservations et paiements en toute facilité</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Voyages</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${voyagesCount}" style="color: white;">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #e22121 0%, #ece5e5 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Réservations</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${reservationsCount}" style="color: white;">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Taxi-brousses</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${taxis}" style="color: white;">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <div class="card-body text-white text-center p-4">
+                            <div class="small text-white-50 mb-1">Clients</div>
+                            <h2 class="display-4 fw-bold mb-0" th:text="${clientsCount}" style="color: white;">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <!-- Recent Activity -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 fw-semibold">Activité récente</h5>
+                            <div class="table-responsive">
+                                <table class="table table-borderless">
+                                    <thead>
+                                        <tr class="text-muted small">
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="badge bg-primary rounded-pill">Voyage</span></td>
+                                            <td>Tana → Majunga</td>
+                                            <td><span class="badge bg-success">Actif</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-warning rounded-pill">Réservation</span></td>
+                                            <td>Client: Rakoto Jean</td>
+                                            <td><span class="badge bg-info">En attente</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-success rounded-pill">Paiement</span></td>
+                                            <td>25,000 MGA</td>
+                                            <td><span class="badge bg-success">Confirmé</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 fw-semibold">Actions rapides</h5>
+                            <div class="d-grid gap-2">
+                                <a href="/voyages/create" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-plus-circle me-2"></i>Nouveau Voyage
+                                </a>
+                                <a href="/reservations/search" class="btn btn-lg" style="background: linear-gradient(135deg, #0ac210 0%, #e4dbdc 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-search me-2"></i>Rechercher Voyage
+                                </a>
+                                <a href="/clients/create" class="btn btn-lg" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 12px; padding: 1rem;">
+                                    <i class="bi bi-person-plus me-2"></i>Ajouter Client
+                                </a>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

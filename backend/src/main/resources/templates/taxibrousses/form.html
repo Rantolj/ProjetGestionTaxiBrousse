@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      lang="fr">
+<head>
+    <title>Créer Taxi-brousse</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Créer/modifier Taxi-brousse</h5>
+                    <form th:action="@{/taxibrousses/save}" th:object="${taxi}" method="post">
+                        <div class="mb-3">
+                            <label for="immatriculation" class="form-label">Immatriculation</label>
+                            <input type="text" class="form-control" id="immatriculation" th:field="*{immatriculation}"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nbrPlaces" class="form-label">Nombre de places</label>
+                            <input type="number" class="form-control" id="nbrPlaces" th:field="*{nbrPlaces}"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="disposition" class="form-label">Disposition de place</label>
+                            <input type="text" class="form-control" id="disposition" th:field="*{dispositionPlaces}"/>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            <a href="/taxibrousses" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

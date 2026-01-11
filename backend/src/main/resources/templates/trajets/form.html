@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Trajet</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Formulaire Trajet</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <form method="POST" action="/trajets/save" class="card p-4">
+                    <div class="mb-3">
+                        <label for="nom" class="form-label">Nom du Trajet</label>
+                        <input type="text" class="form-control" id="nom" name="nom" th:value="${trajet?.nom}"
+                               placeholder="Ex: Tana - Majunga" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="distance" class="form-label">Distance (km)</label>
+                        <input type="number" class="form-control" id="distance" name="distance" step="0.01"
+                               th:value="${trajet?.distance}" placeholder="Ex: 500" required>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                        <a href="/trajets" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

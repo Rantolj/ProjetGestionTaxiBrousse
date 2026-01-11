@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head>
+    <title>Paiement</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Formulaire Paiement</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <form method="POST" action="/paiements/save" class="card p-4">
+                    <input type="hidden" name="id" th:value="${paiement?.id}">
+
+                    <div class="mb-3">
+                        <label for="reservation" class="form-label">Réservation</label>
+                        <select id="reservation" name="reservation.id" class="form-select" required>
+                            <option value="">Sélectionner une réservation</option>
+                            <option th:each="r : ${reservations}" th:value="${r.id}"
+                                    th:text="${r.id + ' - ' + (r.client?.personne?.nom != null ? r.client.personne.nom : '') + ' ' + (r.client?.personne?.prenom != null ? r.client.personne.prenom : '')}"
+                                    th:selected="${paiement?.reservation?.id == r.id}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="montantPaye" class="form-label">Montant Payé</label>
+                        <input type="number" class="form-control" id="montantPaye" name="montantPaye" step="0.01"
+                               th:value="${paiement?.montantPaye}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="datePaiement" class="form-label">Date Paiement</label>
+                        <input type="date" class="form-control" id="datePaiement" name="datePaiement"
+                               th:value="${paiement?.datePaiement != null ? #dates.format(paiement.datePaiement, 'yyyy-MM-dd') : ''}" required>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                        <a href="/paiements" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

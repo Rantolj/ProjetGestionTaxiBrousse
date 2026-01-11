@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      lang="fr">
+<head>
+    <title>Créer Voyage</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Créer/modifier Voyage</h5>
+                    <form th:action="@{/voyages/save}" th:object="${voyage}" method="post">
+                        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" role="alert">
+                            <ul class="mb-0">
+                                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dateDepart" class="form-label">Date départ</label>
+                            <input type="datetime-local" class="form-control" id="dateDepart" th:field="*{dateDepart}"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="trajet" class="form-label">Trajet</label>
+                            <select id="trajet" class="form-select" th:field="*{trajet.id}" required>
+                                <option value="">Sélectionner un trajet</option>
+                                <option th:each="t : ${trajets}" th:value="${t.id}"
+                                        th:text="${t.nom}"
+                                        th:selected="${voyage.trajet?.id == t.id}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="chauffeur" class="form-label">Chauffeur</label>
+                            <select id="chauffeur" class="form-select" th:field="*{chauffeur.id}" required>
+                                <option value="">Sélectionner un chauffeur</option>
+                                <option th:each="c : ${chauffeurs}" th:value="${c.id}"
+                                        th:text="${c.personne?.nom + ' ' + c.personne?.prenom}"
+                                        th:selected="${voyage.chauffeur?.id == c.id}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="taxiBrousse" class="form-label">Taxi-brousse</label>
+                            <select id="taxiBrousse" class="form-select" th:field="*{taxiBrousse.id}" required>
+                                <option value="">Sélectionner un véhicule</option>
+                                <option th:each="tb : ${taxibrousses}" th:value="${tb.id}"
+                                        th:text="${tb.immatriculation + ' - ' + tb.nbrPlaces}"
+                                        th:selected="${voyage.taxiBrousse?.id == tb.id}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            <a href="/voyages" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

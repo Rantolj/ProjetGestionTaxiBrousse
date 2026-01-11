@@ -1,0 +1,6 @@
+1. Tables concernées (pour tes exigences)
+
+Trajet / arrêts / détails de trajet : trajets, trajet_details, arrets (avec est_gare) → définissent le chemin (peut être utilisé n’importe quel jour).
+Véhicules et chauffeurs : taxi_brousses, categories_tb, chauffeurs, personnes.
+Voyages concrets : voyages (lien vers trajet + taxi + chauffeur + date_depart) → permet déjà plusieurs voitures et plusieurs voyages dans la journée.
+Réservations / places / paiements : reservations, details_reservations, paiements, frais → gèrent les passagers, les places, l’argent.0!

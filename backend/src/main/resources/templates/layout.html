@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Gestion Taxi-Brousse</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            overflow-y: auto;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+        }
+
+        .sidebar .logo {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            transition: all 0.3s ease;
+            margin: 0.5rem 0;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: #43e97b;
+            padding-left: 1.8rem;
+        }
+
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: #43e97b;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.8rem;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem 2rem;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: #95a5a6;
+        }
+    </style>;
+
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="bi bi-bus-front"></i> Taxi-Brousse
+        </div>
+        <nav>
+            <a href="/" class="nav-link" th:classappend="${currentPage == 'dashboard' ? 'active' : ''}">
+                <i class="bi bi-graph-up"></i> Tableau de bord
+            </a>
+            <a href="/personnes" class="nav-link" th:classappend="${currentPage == 'personnes' ? 'active' : ''}">
+                <i class="bi bi-people"></i> Personnes
+            </a>
+            <a href="/taxibrousses" class="nav-link" th:classappend="${currentPage == 'taxibrousses' ? 'active' : ''}">
+                <i class="bi bi-bus-front"></i> Taxi-brousses
+            </a>
+            <a href="/voyages" class="nav-link" th:classappend="${currentPage == 'voyages' ? 'active' : ''}">
+                <i class="bi bi-map"></i> Voyages
+            </a>
+            <a href="/clients" class="nav-link" th:classappend="${currentPage == 'clients' ? 'active' : ''}">
+                <i class="bi bi-person-badge"></i> Clients
+            </a>
+            <a href="/chauffeurs" class="nav-link" th:classappend="${currentPage == 'chauffeurs' ? 'active' : ''}">
+                <i class="bi bi-person-gear"></i> Chauffeurs
+            </a>
+            <a href="/reservations" class="nav-link" th:classappend="${currentPage == 'reservations' ? 'active' : ''}">
+                <i class="bi bi-bookmark"></i> Réservations
+            </a>
+            <a href="/reservations/search" class="nav-link" th:classappend="${currentPage == 'reservations-search' ? 'active' : ''}">
+                <i class="bi bi-search"></i> Recherche de voyages
+            </a>
+            <a href="/paiements" class="nav-link" th:classappend="${currentPage == 'paiements' ? 'active' : ''}">
+                <i class="bi bi-cash"></i> Paiements
+            </a>
+            <a href="/trajets" class="nav-link" th:classappend="${currentPage == 'trajets' ? 'active' : ''}">
+                <i class="bi bi-signpost-2"></i> Trajets
+            </a>
+            <a href="/arrets" class="nav-link" th:classappend="${currentPage == 'arrets' ? 'active' : ''}">
+                <i class="bi bi-geo-alt"></i> Arrêts
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar" th:if="${pageTitle != null}">
+            <h1 th:text="${pageTitle}">Page Title</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="content" layout:fragment="content">
+            <!-- Dynamic content will be inserted here -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
