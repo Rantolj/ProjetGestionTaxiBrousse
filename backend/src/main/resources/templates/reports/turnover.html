@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="fr">
+<head>
+    <title>Chiffre d'affaires</title>
+    <style>
+        .list-header { background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .list-header h2 { margin: 0; font-size: 2rem; font-weight: 700; }
+        .filter-bar { background: white; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .card-metric { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); padding: 1.25rem; height: 100%; }
+        .card-metric .label { color: #6c757d; font-size: .9rem; }
+        .card-metric .value { font-size: 1.6rem; font-weight: 700; }
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <div class="list-header">
+            <h2><i class="bi bi-bar-chart-line-fill me-2"></i>Chiffre d'affaires</h2>
+            <div class="opacity-75 mt-2">Filtrer par date et consulter le CA par voiture et par voyage.</div>
+        </div>
+
+        <div class="filter-bar">
+            <form method="get" action="/reports/turnover" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Du</label>
+                    <input type="date" class="form-control" name="from" th:value="${from}" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Au</label>
+                    <input type="date" class="form-control" name="to" th:value="${to}" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trajet</label>
+                    <select name="trajetId" class="form-select">
+                        <option value="" th:text="'Tous'" th:selected="${trajetId == null}"></option>
+                        <option th:each="t : ${trajets}" th:value="${t.id}" th:text="${t.nom}"
+                                th:selected="${trajetId != null and trajetId == t.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-2"></i>Filtrer</button>
+                    <a class="btn btn-outline-secondary" href="/reports/turnover"><i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-cash-coin me-2"></i>Total CA (réservations)</div>
+                    <div class="value" th:text="${#numbers.formatDecimal(totalCA, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1" th:text="'Période: ' + ${from} + ' → ' + ${to}">Période</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-map me-2"></i>Voyages (dans la période)</div>
+                    <div class="value" th:text="${voyagesCount}">0</div>
+                    <div class="text-muted mt-1">Groupé par voyage</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-bus-front me-2"></i>Lignes CA voiture/jour</div>
+                    <div class="value" th:text="${taxiDaily != null ? taxiDaily.size() : 0}">0</div>
+                    <div class="text-muted mt-1">Groupé par voiture et date de départ</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-xl-6">
+                <div class="table-container">
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-bus-front-fill me-2"></i>CA par voiture et par jour</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th>Voiture</th>
+                                <th>Jour</th>
+                                <th class="text-end">CA</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${taxiDaily == null || taxiDaily.isEmpty()}">
+                                <td colspan="3" class="text-center text-muted py-4">Aucune donnée pour la période.</td>
+                            </tr>
+                            <tr th:each="row : ${taxiDaily}">
+                                <td th:text="${row.immatriculation}">-</td>
+                                <td th:text="${row.jour != null ? #temporals.format(row.jour, 'dd/MM/yyyy') : ''}"></td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(row.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="table-container">
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-map-fill me-2"></i>CA par trajet</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th>Trajet</th>
+                                <th class="text-end">Réservations</th>
+                                <th class="text-end">CA</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${trajets == null || trajets.isEmpty()}">
+                                <td colspan="3" class="text-center text-muted py-4">Aucun trajet pour la période.</td>
+                            </tr>
+                            <tr th:each="t : ${trajetsCA}">
+                                <td>
+                                    <div class="fw-semibold" th:text="${t.trajetNom != null ? t.trajetNom : 'Trajet #' + t.trajetId}">Trajet</div>
+                                </td>
+                                <td class="text-end" th:text="${t.reservationCount}">0</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(t.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
