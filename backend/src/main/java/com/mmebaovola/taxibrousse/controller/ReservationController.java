@@ -160,8 +160,29 @@ public class ReservationController {
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
         if (dateReservationStr != null && !dateReservationStr.isBlank()) {
-            LocalDateTime dateTime = LocalDateTime.parse(dateReservationStr);
-            reservation.setDateReservation(dateTime);
+            try {
+                LocalDateTime dateTime = LocalDateTime.parse(dateReservationStr);
+                reservation.setDateReservation(dateTime);
+            } catch (java.time.format.DateTimeParseException ex) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Format de date invalide pour la réservation.");
+                return "redirect:/reservations/create";
+            }
+        }
+
+        // Validation : la date de réservation ne doit pas être postérieure à la date de
+        // départ du voyage
+        if (reservation.getVoyage() != null && reservation.getVoyage().getId() != null) {
+            var optVoyage = voyageRepository.findById(reservation.getVoyage().getId());
+            if (optVoyage.isPresent()) {
+                Voyage voyage = optVoyage.get();
+                if (voyage.getDateDepart() != null && reservation.getDateReservation() != null
+                        && reservation.getDateReservation().isAfter(voyage.getDateDepart())) {
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "La date de réservation ne peut pas être postérieure à la date de départ du voyage.");
+                    // Retourner au formulaire de création en conservant le voyage sélectionné
+                    return "redirect:/reservations/create?voyageId=" + voyage.getId();
+                }
+            }
         }
 
         reservationRepository.save(reservation);

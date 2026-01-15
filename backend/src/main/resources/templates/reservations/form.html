@@ -171,6 +171,9 @@
     <div class="container-fluid px-4 py-4">
         <h2 class="mb-4">Créer Réservation</h2>
 
+        <div th:if="${errorMessage != null}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}"></div>
+
         <div class="reservation-container">
             <div class="reservation-form-column">
                 <form method="POST" action="/reservations/save" class="card p-4">
@@ -182,6 +185,7 @@
                             <option value="">Sélectionner un voyage</option>
                                 <option th:each="voyage : ${voyages}" th:value="${voyage.id}"
                                     th:text="${voyage.trajet?.nom + ' - ' + #temporals.format(voyage.dateDepart, 'dd/MM/yyyy')}"
+                                    th:attr="data-date=${voyage.dateDepart != null ? #temporals.format(voyage.dateDepart, 'yyyy-MM-dd''T''HH:mm') : ''}"
                                     th:selected="${selectedVoyageId != null and selectedVoyageId == voyage.id}"></option>
                         </select>
                     </div>
@@ -308,6 +312,8 @@
                             const standardCountDisplay = document.getElementById('standardCount');
                             const totalAmountDisplay = document.getElementById('totalAmount');
                             const montantTotalInput = document.getElementById('montantTotal');
+                            const voyageSelect = document.getElementById('voyage');
+                            const dateReservationInput = document.getElementById('dateReservation');
 
                             function formatNumber(num) {
                                 return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -344,10 +350,22 @@
                                 montantTotalInput.value = totalAmount;
                             }
 
+                            function updateDateMax() {
+                                if (!voyageSelect || !dateReservationInput) return;
+                                const opt = voyageSelect.options[voyageSelect.selectedIndex];
+                                if (opt && opt.getAttribute('data-date')) {
+                                    dateReservationInput.max = opt.getAttribute('data-date');
+                                } else {
+                                    dateReservationInput.removeAttribute('max');
+                                }
+                            }
+
                             checkboxes.forEach(cb => cb.addEventListener('change', updateDisplay));
-                            
+                            voyageSelect.addEventListener('change', updateDateMax);
+
                             // Initial calculation
                             updateDisplay();
+                            updateDateMax();
                         });
                     </script>
 
