@@ -53,6 +53,13 @@
                             </select>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut</label>
+                            <select id="status" class="form-select" th:field="*{status}">
+                                <option th:each="s : ${T(com.mmebaovola.taxibrousse.entity.VoyageStatus).values()}" th:value="${s.name()}" th:text="${s.name()}" th:selected="${voyage.status == s}"></option>
+                            </select>
+                        </div>
+
                         <div>
                             <button type="submit" class="btn btn-primary">Enregistrer</button>
                             <a href="/voyages" class="btn btn-secondary">Annuler</a>

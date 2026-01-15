@@ -101,4 +101,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("startInclusive") LocalDateTime startInclusive,
             @Param("endExclusive") LocalDateTime endExclusive,
             @Param("trajetId") Long trajetId);
+
+    List<Reservation> findByVoyage_Id(Long voyageId);
 }

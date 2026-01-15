@@ -101,7 +101,8 @@ CREATE TABLE IF NOT EXISTS voyages
     taxi_brousse_id INTEGER REFERENCES taxi_brousses (id),
     chauffeur_id    INTEGER REFERENCES chauffeurs (id),
     trajet_id       INTEGER REFERENCES trajets (id),
-    date_depart     TIMESTAMP NOT NULL
+    date_depart     TIMESTAMP NOT NULL,
+    status          VARCHAR(20) NOT NULL DEFAULT 'PREVU'
 );
 
 CREATE TABLE IF NOT EXISTS reservations
@@ -126,6 +127,16 @@ CREATE TABLE IF NOT EXISTS paiements
     reservation_id INTEGER REFERENCES reservations (id),
     montant_paye   DECIMAL(10, 2) NOT NULL,
     date_paiement  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notifications
+(
+    id SERIAL PRIMARY KEY,
+    destinataire VARCHAR(255),
+    message TEXT,
+    sent BOOLEAN DEFAULT FALSE,
+    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    voyage_id INTEGER REFERENCES voyages (id)
 );
 
 CREATE TABLE IF NOT EXISTS configurations

@@ -24,6 +24,10 @@
                     <div class="col-md-8">
                         <form method="get" action="/voyages" class="d-flex gap-2">
                             <input type="search" name="q" class="form-control" placeholder="Rechercher un voyage..." th:value="${q}">
+                            <select name="status" class="form-select" style="max-width:200px;">
+                                <option value="">Tous statuts</option>
+                                <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}" th:selected="${status == s.name()}"></option>
+                            </select>
                             <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Rechercher</button>
                         </form>
                     </div>
@@ -42,7 +46,8 @@
                                 <th><i class="bi bi-person-badge me-2"></i>Chauffeur</th>
                                 <th><i class="bi bi-map me-2"></i>Trajet</th>
                                 <th><i class="bi bi-calendar me-2"></i>Date départ</th>
-                                <th class="text-end" style="width: 150px;">Actions</th>
+                                <th><i class="bi bi-gear me-2"></i>Statut</th>
+                                <th class="text-end" style="width: 200px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,9 +57,24 @@
                                 <td th:text="${v.chauffeur != null ? v.chauffeur.personne.nom : ''}"></td>
                                 <td th:text="${v.trajet != null ? v.trajet.nom : ''}"></td>
                                 <td th:text="${v.dateDepart}"></td>
+                                <td>
+                                    <span th:switch="${v.status}">
+                                        <span th:case="T(java.lang.String).valueOf('PREVU')" class="badge bg-info text-dark">Prévu</span>
+                                        <span th:case="T(java.lang.String).valueOf('A_L_HEURE')" class="badge bg-success">À l'heure</span>
+                                        <span th:case="T(java.lang.String).valueOf('EN_RETARD')" class="badge bg-warning text-dark">En retard</span>
+                                        <span th:case="T(java.lang.String).valueOf('ANNULE')" class="badge bg-danger">Annulé</span>
+                                        <span th:case="*" class="badge bg-secondary" th:text="${v.status}"></span>
+                                    </span>
+                                </td>
                                 <td class="text-end">
                                     <a href="#" th:href="@{'/voyages/edit/' + ${v.id}}" class="btn btn-icon btn-info" title="Modifier"><i class="bi bi-pencil"></i></a>
                                     <a href="#" th:href="@{'/voyages/delete/' + ${v.id}}" class="btn btn-icon btn-danger" onclick="return confirm('Êtes-vous sûr ?')" title="Supprimer"><i class="bi bi-trash"></i></a>
+                                    <form th:action="@{'/voyages/' + ${v.id} + '/status'}" method="post" style="display:inline-block; margin-left:6px;">
+                                        <select name="status" class="form-select form-select-sm" style="display:inline-block; width:130px;">
+                                            <option th:each="s : ${T(com.mmebaovola.taxibrousse.entity.VoyageStatus).values()}" th:value="${s.name()}" th:text="${s.name()}" th:selected="${v.status == s}"></option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">Mettre à jour</button>
+                                    </form>
                                 </td>
                             </tr>
                         </tbody>

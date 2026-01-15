@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.mmebaovola.taxibrousse.entity.Voyage;
+import com.mmebaovola.taxibrousse.service.NotificationService;
+
 import java.util.List;
 
 @Controller
@@ -26,19 +29,23 @@ public class VoyageController {
     private final TrajetRepository trajetRepository;
     private final ChauffeurRepository chauffeurRepository;
     private final TaxiBrousseRepository taxiBrousseRepository;
+    private final NotificationService notificationService;
 
     public VoyageController(VoyageRepository voyageRepository,
             TrajetRepository trajetRepository,
             ChauffeurRepository chauffeurRepository,
-            TaxiBrousseRepository taxiBrousseRepository) {
+            TaxiBrousseRepository taxiBrousseRepository,
+            NotificationService notificationService) {
         this.voyageRepository = voyageRepository;
         this.trajetRepository = trajetRepository;
         this.chauffeurRepository = chauffeurRepository;
         this.taxiBrousseRepository = taxiBrousseRepository;
+        this.notificationService = notificationService;
     }
 
     @GetMapping
-    public String list(Model model, @RequestParam(name = "q", required = false) String q) {
+    public String list(Model model, @RequestParam(name = "q", required = false) String q,
+                       @RequestParam(name = "status", required = false) String status) {
         List<Voyage> voyages = voyageRepository.findAll();
 
         if (q != null && !q.trim().isEmpty()) {
@@ -69,10 +76,18 @@ public class VoyageController {
                     .toList();
         }
 
+        if (status != null && !status.isBlank()) {
+            voyages = voyages.stream()
+                    .filter(v -> v.getStatus() != null && v.getStatus().name().equalsIgnoreCase(status))
+                    .toList();
+        }
+
         model.addAttribute("pageTitle", "Voyages");
         model.addAttribute("currentPage", "voyages");
         model.addAttribute("voyages", voyages);
         model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", com.mmebaovola.taxibrousse.entity.VoyageStatus.values());
         return "voyages/list";
     }
 
@@ -130,6 +145,29 @@ public class VoyageController {
 
         voyageRepository.save(voyage);
         redirectAttributes.addFlashAttribute("successMessage", "Voyage enregistré avec succès.");
+        return "redirect:/voyages";
+    }
+
+    @PostMapping("/{id}/status")
+    public String changeStatus(@PathVariable Long id, @RequestParam String status,
+                               org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        var opt = voyageRepository.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Voyage introuvable.");
+            return "redirect:/voyages";
+        }
+        Voyage v = opt.get();
+        String old = v.getStatus() != null ? v.getStatus().name() : "";
+        try {
+            com.mmebaovola.taxibrousse.entity.VoyageStatus ns = com.mmebaovola.taxibrousse.entity.VoyageStatus.valueOf(status);
+            v.setStatus(ns);
+            voyageRepository.save(v);
+            // create notifications
+            notificationService.notifyVoyageStatusChange(v, old, ns.name());
+            redirectAttributes.addFlashAttribute("successMessage", "Statut mis à jour.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Statut invalide.");
+        }
         return "redirect:/voyages";
     }
 

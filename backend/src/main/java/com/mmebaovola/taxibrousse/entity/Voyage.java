@@ -30,4 +30,8 @@ public class Voyage {
     private Trajet trajet;
 
     private LocalDateTime dateDepart;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private com.mmebaovola.taxibrousse.entity.VoyageStatus status = com.mmebaovola.taxibrousse.entity.VoyageStatus.PREVU;
 }
