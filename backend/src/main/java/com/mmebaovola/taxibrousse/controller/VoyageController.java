@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -130,5 +131,16 @@ public class VoyageController {
         voyageRepository.save(voyage);
         redirectAttributes.addFlashAttribute("successMessage", "Voyage enregistré avec succès.");
         return "redirect:/voyages";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable Long id, Model model) {
+        model.addAttribute("pageTitle", "Modifier Voyage");
+        model.addAttribute("currentPage", "voyages");
+        model.addAttribute("voyage", voyageRepository.findById(id).orElse(new Voyage()));
+        model.addAttribute("trajets", trajetRepository.findAll());
+        model.addAttribute("chauffeurs", chauffeurRepository.findAll());
+        model.addAttribute("taxibrousses", taxiBrousseRepository.findAll());
+        return "voyages/form";
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -57,5 +58,13 @@ public class TaxiBrousseController {
     public String save(TaxiBrousse taxi) {
         taxiBrousseRepository.save(taxi);
         return "redirect:/taxibrousses";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable Long id, Model model) {
+        model.addAttribute("pageTitle", "Modifier Taxi-brousse");
+        model.addAttribute("currentPage", "taxibrousses");
+        model.addAttribute("taxi", taxiBrousseRepository.findById(id).orElse(new TaxiBrousse()));
+        return "taxibrousses/form";
     }
 }
