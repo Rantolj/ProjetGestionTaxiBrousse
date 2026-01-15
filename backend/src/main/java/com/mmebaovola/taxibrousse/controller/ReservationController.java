@@ -3,12 +3,16 @@ package com.mmebaovola.taxibrousse.controller;
 import com.mmebaovola.taxibrousse.entity.Reservation;
 import com.mmebaovola.taxibrousse.entity.DetailsReservation;
 import com.mmebaovola.taxibrousse.entity.Voyage;
+import com.mmebaovola.taxibrousse.entity.CategoriePlace;
+import com.mmebaovola.taxibrousse.entity.TarifPlace;
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
 import com.mmebaovola.taxibrousse.repository.DetailsReservationRepository;
 import com.mmebaovola.taxibrousse.repository.ArretRepository;
 import com.mmebaovola.taxibrousse.repository.TrajetDetailRepository;
+import com.mmebaovola.taxibrousse.repository.CategoriePlaceRepository;
+import com.mmebaovola.taxibrousse.repository.TarifPlaceRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +21,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 @Controller
@@ -35,16 +42,21 @@ public class ReservationController {
     private final DetailsReservationRepository detailsReservationRepository;
     private final ArretRepository arretRepository;
     private final TrajetDetailRepository trajetDetailRepository;
+    private final CategoriePlaceRepository categoriePlaceRepository;
+    private final TarifPlaceRepository tarifPlaceRepository;
 
     public ReservationController(ReservationRepository reservationRepository, VoyageRepository voyageRepository,
             ClientRepository clientRepository, DetailsReservationRepository detailsReservationRepository,
-            ArretRepository arretRepository, TrajetDetailRepository trajetDetailRepository) {
+            ArretRepository arretRepository, TrajetDetailRepository trajetDetailRepository,
+            CategoriePlaceRepository categoriePlaceRepository, TarifPlaceRepository tarifPlaceRepository) {
         this.reservationRepository = reservationRepository;
         this.voyageRepository = voyageRepository;
         this.clientRepository = clientRepository;
         this.detailsReservationRepository = detailsReservationRepository;
         this.arretRepository = arretRepository;
         this.trajetDetailRepository = trajetDetailRepository;
+        this.categoriePlaceRepository = categoriePlaceRepository;
+        this.tarifPlaceRepository = tarifPlaceRepository;
     }
 
     @GetMapping
@@ -117,8 +129,23 @@ public class ReservationController {
                 }
             }
 
-            List<List<SeatView>> seatRows = buildSeatMap(disposition, reservedSeats);
+            // Récupérer les catégories de places du taxi (PREMIUM, STANDARD)
+            List<CategoriePlace> categoriesPlaces = categoriePlaceRepository
+                    .findByTaxiBrousseId(selectedVoyage.getTaxiBrousse().getId());
+
+            // Récupérer les tarifs du trajet
+            Map<String, BigDecimal> tarifsByType = new HashMap<>();
+            if (selectedVoyage.getTrajet() != null) {
+                List<TarifPlace> tarifs = tarifPlaceRepository.findByTrajetId(selectedVoyage.getTrajet().getId());
+                for (TarifPlace tp : tarifs) {
+                    tarifsByType.put(tp.getTypePlace(), tp.getMontant());
+                }
+            }
+
+            List<List<SeatView>> seatRows = buildSeatMap(disposition, reservedSeats, categoriesPlaces, tarifsByType);
             model.addAttribute("seatRows", seatRows);
+            model.addAttribute("tarifsByType", tarifsByType);
+            model.addAttribute("categoriesPlaces", categoriesPlaces);
         }
 
         model.addAttribute("selectedVoyageId", selectedVoyage != null ? selectedVoyage.getId() : null);
@@ -180,13 +207,15 @@ public class ReservationController {
         return "redirect:/reservations";
     }
 
-    private List<List<SeatView>> buildSeatMap(String disposition, Set<String> reservedSeats) {
+    private List<List<SeatView>> buildSeatMap(String disposition, Set<String> reservedSeats,
+            List<CategoriePlace> categoriesPlaces, Map<String, BigDecimal> tarifsByType) {
         List<List<SeatView>> rows = new ArrayList<>();
         if (disposition == null || disposition.isEmpty()) {
             return rows;
         }
 
         String[] rawRows = disposition.split("/");
+
         for (int i = 0; i < rawRows.length; i++) {
             String row = rawRows[i];
             char rowLetter = (char) ('A' + i);
@@ -196,13 +225,38 @@ public class ReservationController {
             for (int j = 0; j < row.length(); j++) {
                 char c = row.charAt(j);
                 if (c == 'x' || c == 'X') {
+                    // Couloir / espace vide
                     seatViews.add(SeatView.walkway());
-                } else if (c == 'o' || c == 'O') {
+                } else if (c == 'V' || c == 'v') {
+                    // Place VIP
                     seatIndexInRow++;
                     String label = rowLetter + String.valueOf(seatIndexInRow);
                     boolean reserved = reservedSeats.contains(label);
-                    seatViews.add(SeatView.seat(label, !reserved));
+                    BigDecimal prix = tarifsByType.getOrDefault("VIP", BigDecimal.ZERO);
+                    seatViews.add(SeatView.seat(label, !reserved, "VIP", prix));
+                } else if (c == 'P' || c == 'p') {
+                    // Place PREMIUM
+                    seatIndexInRow++;
+                    String label = rowLetter + String.valueOf(seatIndexInRow);
+                    boolean reserved = reservedSeats.contains(label);
+                    BigDecimal prix = tarifsByType.getOrDefault("PREMIUM", BigDecimal.ZERO);
+                    seatViews.add(SeatView.seat(label, !reserved, "PREMIUM", prix));
+                } else if (c == 'S' || c == 's') {
+                    // Place STANDARD
+                    seatIndexInRow++;
+                    String label = rowLetter + String.valueOf(seatIndexInRow);
+                    boolean reserved = reservedSeats.contains(label);
+                    BigDecimal prix = tarifsByType.getOrDefault("STANDARD", BigDecimal.ZERO);
+                    seatViews.add(SeatView.seat(label, !reserved, "STANDARD", prix));
+                } else if (c == 'o' || c == 'O') {
+                    // Ancien format (compatibilité) - traité comme STANDARD
+                    seatIndexInRow++;
+                    String label = rowLetter + String.valueOf(seatIndexInRow);
+                    boolean reserved = reservedSeats.contains(label);
+                    BigDecimal prix = tarifsByType.getOrDefault("STANDARD", BigDecimal.ZERO);
+                    seatViews.add(SeatView.seat(label, !reserved, "STANDARD", prix));
                 } else {
+                    // Autre caractère = espace vide
                     seatViews.add(SeatView.walkway());
                 }
             }
@@ -315,19 +369,23 @@ public class ReservationController {
         private final String label;
         private final boolean seat;
         private final boolean available;
+        private final String type; // VIP, PREMIUM ou STANDARD
+        private final BigDecimal prix;
 
-        private SeatView(String label, boolean seat, boolean available) {
+        private SeatView(String label, boolean seat, boolean available, String type, BigDecimal prix) {
             this.label = label;
             this.seat = seat;
             this.available = available;
+            this.type = type;
+            this.prix = prix;
         }
 
         public static SeatView walkway() {
-            return new SeatView(null, false, false);
+            return new SeatView(null, false, false, null, null);
         }
 
-        public static SeatView seat(String label, boolean available) {
-            return new SeatView(label, true, available);
+        public static SeatView seat(String label, boolean available, String type, BigDecimal prix) {
+            return new SeatView(label, true, available, type, prix);
         }
 
         public String getLabel() {
@@ -340,6 +398,22 @@ public class ReservationController {
 
         public boolean isAvailable() {
             return available;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public BigDecimal getPrix() {
+            return prix;
+        }
+
+        public boolean isPremium() {
+            return "PREMIUM".equalsIgnoreCase(type);
+        }
+
+        public boolean isVip() {
+            return "VIP".equalsIgnoreCase(type);
         }
     }
 

@@ -5,6 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "taxi_brousses")
 @Getter
@@ -29,4 +33,17 @@ public class TaxiBrousse {
     private Double consommation;
 
     private String dispositionPlaces;
+
+    @OneToMany(mappedBy = "taxiBrousse", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<CategoriePlace> categoriesPlaces = new ArrayList<>();
+
+    /**
+     * Calcule le CA maximum potentiel pour ce taxi-brousse
+     * CA_max = Σ (nbr_places_type × prix_par_type) pour chaque catégorie
+     */
+    public BigDecimal getCAMaxPotentiel() {
+        return categoriesPlaces.stream()
+                .map(CategoriePlace::getCAMax)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

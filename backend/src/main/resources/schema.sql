@@ -68,6 +68,24 @@ CREATE TABLE IF NOT EXISTS taxi_brousses
     disposition_places VARCHAR(255)  NOT NULL            -- xxoo/oooo/ooxo/ooxo/ooxo/oooo
 );
 
+CREATE TABLE IF NOT EXISTS categories_places
+(
+    id  SERIAL PRIMARY KEY,
+    taxi_brousse_id INTEGER REFERENCES taxi_brousses (id),
+    type VARCHAR(50) NOT NULL, -- 'STANDARD', 'PREMIUM'
+    nbr_places_type INTEGER NOT NULL,
+    prix_par_type DECIMAL(15,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tarifs_places
+(
+    id             SERIAL PRIMARY KEY,
+    trajet_id      INTEGER REFERENCES trajets (id),
+    type_place     VARCHAR(50) NOT NULL, -- 'STANDARD', 'PREMIUM'
+    montant        DECIMAL(15, 2) NOT NULL,
+    date_effective DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
 CREATE TABLE IF NOT EXISTS frais
 (
     id             SERIAL PRIMARY KEY,

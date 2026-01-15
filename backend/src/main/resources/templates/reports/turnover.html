@@ -10,6 +10,9 @@
         .card-metric .label { color: #6c757d; font-size: .9rem; }
         .card-metric .value { font-size: 1.6rem; font-weight: 700; }
         .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .progress-sm { height: 8px; border-radius: 4px; }
+        .badge-taux { font-size: 0.75rem; padding: 4px 8px; }
+        .section-title { font-size: 1.25rem; font-weight: 600; color: #333; margin: 2rem 0 1rem; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; display: inline-block; }
     </style>
 </head>
 <body>
@@ -46,26 +49,83 @@
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card-metric">
                     <div class="label"><i class="bi bi-cash-coin me-2"></i>Total CA (réservations)</div>
                     <div class="value" th:text="${#numbers.formatDecimal(totalCA, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
                     <div class="text-muted mt-1" th:text="'Période: ' + ${from} + ' → ' + ${to}">Période</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-graph-up-arrow me-2 text-success"></i>CA Max Potentiel</div>
+                    <div class="value text-success" th:text="${#numbers.formatDecimal(totalCAMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1">Si toutes les places étaient vendues</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-percent me-2 text-primary"></i>Taux de remplissage global</div>
+                    <div class="value" th:classappend="${tauxGlobal >= 80 ? 'text-success' : (tauxGlobal >= 50 ? 'text-warning' : 'text-danger')}" 
+                         th:text="${tauxGlobal} + '%'">0%</div>
+                    <div class="progress progress-sm mt-2">
+                        <div class="progress-bar" role="progressbar" 
+                             th:style="'width: ' + ${tauxGlobal} + '%'"
+                             th:classappend="${tauxGlobal >= 80 ? 'bg-success' : (tauxGlobal >= 50 ? 'bg-warning' : 'bg-danger')}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card-metric">
                     <div class="label"><i class="bi bi-map me-2"></i>Voyages (dans la période)</div>
                     <div class="value" th:text="${voyagesCount}">0</div>
                     <div class="text-muted mt-1">Groupé par voyage</div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-bus-front me-2"></i>Lignes CA voiture/jour</div>
-                    <div class="value" th:text="${taxiDaily != null ? taxiDaily.size() : 0}">0</div>
-                    <div class="text-muted mt-1">Groupé par voiture et date de départ</div>
-                </div>
+        </div>
+
+        <!-- Section CA Max par Voyage -->
+        <h4 class="section-title"><i class="bi bi-speedometer2 me-2"></i>CA Max vs CA Réel par Voyage</h4>
+        <div class="table-container mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Voiture</th>
+                        <th>Trajet</th>
+                        <th>Date départ</th>
+                        <th class="text-end">CA Max</th>
+                        <th class="text-end">CA Réel</th>
+                        <th style="width: 180px;">Taux remplissage</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${voyagesCAMax == null || voyagesCAMax.isEmpty()}">
+                        <td colspan="6" class="text-center text-muted py-4">Aucun voyage pour la période.</td>
+                    </tr>
+                    <tr th:each="v : ${voyagesCAMax}">
+                        <td>
+                            <span class="fw-semibold" th:text="${v.immatriculation}">-</span>
+                        </td>
+                        <td th:text="${v.trajetNom}">-</td>
+                        <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'dd/MM/yyyy HH:mm') : ''}">-</td>
+                        <td class="text-end text-success fw-semibold" th:text="${#numbers.formatDecimal(v.caMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(v.caReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress progress-sm flex-grow-1">
+                                    <div class="progress-bar" role="progressbar" 
+                                         th:style="'width: ' + ${v.tauxRemplissage} + '%'"
+                                         th:classappend="${v.tauxRemplissage >= 80 ? 'bg-success' : (v.tauxRemplissage >= 50 ? 'bg-warning' : 'bg-danger')}"></div>
+                                </div>
+                                <span class="badge badge-taux" 
+                                      th:classappend="${v.tauxRemplissage >= 80 ? 'bg-success' : (v.tauxRemplissage >= 50 ? 'bg-warning' : 'bg-danger')}"
+                                      th:text="${v.tauxRemplissage} + '%'">0%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 

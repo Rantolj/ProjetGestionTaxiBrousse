@@ -67,8 +67,65 @@ public class PaiementController {
     }
 
     @PostMapping("/save")
-    public String save(Paiement paiement) {
+    public String save(Paiement paiement,
+            @RequestParam(name = "datePaiementStr", required = false) String datePaiementStr,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        // Parse date string (format attendu: yyyy-MM-dd'T'HH:mm)
+        java.time.LocalDateTime paiementDate = null;
+        try {
+            if (datePaiementStr != null && !datePaiementStr.isBlank()) {
+                paiementDate = java.time.LocalDateTime.parse(datePaiementStr);
+                paiement.setDatePaiement(paiementDate);
+            }
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Format de date invalide. Utilisez une date/heure valide.");
+            return "redirect:/paiements/create";
+        }
+
+        // Vérifications métier
+        if (paiement.getReservation() == null || paiement.getReservation().getId() == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Veuillez sélectionner une réservation valide.");
+            return "redirect:/paiements/create";
+        }
+
+        var reservation = reservationRepository.findById(paiement.getReservation().getId()).orElse(null);
+        if (reservation == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Réservation introuvable.");
+            return "redirect:/paiements/create";
+        }
+
+        // Somme des paiements déjà effectués
+        Double dejaPaye = paiementRepository.sumMontantByReservationId(reservation.getId());
+        if (dejaPaye == null)
+            dejaPaye = 0.0;
+
+        double montantTotal = reservation.getMontantTotal() != null ? reservation.getMontantTotal() : 0.0;
+        double nouveauTotal = dejaPaye + (paiement.getMontantPaye() != null ? paiement.getMontantPaye() : 0.0);
+
+        if (dejaPaye >= montantTotal) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Cette réservation est déjà entièrement payée.");
+            return "redirect:/paiements/create";
+        }
+
+        if (nouveauTotal > montantTotal) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Le montant payé dépasse le total de la réservation.");
+            return "redirect:/paiements/create";
+        }
+
+        // Vérifier que la date de paiement est à la date de départ ou avant
+        if (paiementDate != null && reservation.getVoyage() != null
+                && reservation.getVoyage().getDateDepart() != null) {
+            if (paiementDate.isAfter(reservation.getVoyage().getDateDepart())) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "La date de paiement doit être le jour du départ ou avant.");
+                return "redirect:/paiements/create";
+            }
+        }
+
         paiementRepository.save(paiement);
+        redirectAttributes.addFlashAttribute("successMessage", "Paiement enregistré.");
         return "redirect:/paiements";
     }
 
