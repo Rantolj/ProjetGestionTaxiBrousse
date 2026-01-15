@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -55,8 +56,24 @@ public class TaxiBrousseController {
     }
 
     @PostMapping("/save")
-    public String save(TaxiBrousse taxi) {
+    public String save(TaxiBrousse taxi, RedirectAttributes redirectAttributes) {
+        String disp = taxi.getDispositionPlaces();
+        int seats = 0;
+        if (disp != null && !disp.isBlank()) {
+            for (char c : disp.toCharArray()) {
+                char uc = Character.toUpperCase(c);
+                if (uc == 'P' || uc == 'S' || uc == 'V' || uc == 'O') {
+                    seats++;
+                }
+            }
+        }
+        if (taxi.getNbrPlaces() == null || taxi.getNbrPlaces() != seats) {
+            taxi.setNbrPlaces(seats);
+            redirectAttributes.addFlashAttribute("warningMessage",
+                    "Le nombre de places a été ajusté à " + seats + " en fonction de la disposition.");
+        }
         taxiBrousseRepository.save(taxi);
+        redirectAttributes.addFlashAttribute("successMessage", "Taxi-brousse enregistré avec succès.");
         return "redirect:/taxibrousses";
     }
 
