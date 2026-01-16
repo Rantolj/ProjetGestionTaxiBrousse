@@ -302,6 +302,29 @@
                         </div>
                     </div>
 
+                    <!-- Modal: seat passenger info -->
+                    <div class="modal fade" id="seatModal" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Place</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p>Place sélectionnée : <strong id="modalSeatLabel"></strong></p>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="" id="modalIsChild">
+                              <label class="form-check-label" for="modalIsChild">Enfant (tarif réduit STANDARD)</label>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modalCancel">Annuler</button>
+                            <button type="button" class="btn btn-primary" id="modalConfirm">Valider</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <script th:inline="javascript">
                         document.addEventListener('DOMContentLoaded', function() {
                             const checkboxes = document.querySelectorAll('input[name="seatNumbers"]');
@@ -314,6 +337,16 @@
                             const montantTotalInput = document.getElementById('montantTotal');
                             const voyageSelect = document.getElementById('voyage');
                             const dateReservationInput = document.getElementById('dateReservation');
+
+                            // modal elements
+                            const seatModalEl = document.getElementById('seatModal');
+                            const bsModal = new bootstrap.Modal(seatModalEl, { backdrop: 'static' });
+                            const modalSeatLabel = document.getElementById('modalSeatLabel');
+                            const modalIsChild = document.getElementById('modalIsChild');
+                            const modalConfirm = document.getElementById('modalConfirm');
+                            const modalCancel = document.getElementById('modalCancel');
+
+                            let currentCheckbox = null;
 
                             function formatNumber(num) {
                                 return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -330,7 +363,13 @@
 
                                 selected.forEach(cb => {
                                     const type = cb.dataset.type;
-                                    const prix = parseFloat(cb.dataset.prix) || 0;
+                                    let prix = parseFloat(cb.dataset.prix) || 0;
+                                    // if this seat marked as child and is STANDARD, override prix
+                                    const isChild = cb.dataset.isChild === 'true';
+                                    if (isChild && type === 'STANDARD') {
+                                        prix = 50000;
+                                    }
+
                                     if (type === 'VIP') {
                                         vipCount++;
                                     } else if (type === 'PREMIUM') {
@@ -350,15 +389,60 @@
                                 montantTotalInput.value = totalAmount;
                             }
 
-                            function updateDateMax() {
-                                if (!voyageSelect || !dateReservationInput) return;
-                                const opt = voyageSelect.options[voyageSelect.selectedIndex];
-                                if (opt && opt.getAttribute('data-date')) {
-                                    dateReservationInput.max = opt.getAttribute('data-date');
-                                } else {
-                                    dateReservationInput.removeAttribute('max');
+                            function setSeatChildHiddenInput(label, isChild) {
+                                const name = 'seatChildFlags';
+                                const inputId = 'seatChild_' + label;
+                                let existing = document.getElementById(inputId);
+                                if (!existing) {
+                                    existing = document.createElement('input');
+                                    existing.type = 'hidden';
+                                    existing.name = name;
+                                    existing.id = inputId;
+                                    document.querySelector('form').appendChild(existing);
                                 }
+                                existing.value = label + ':' + (isChild ? 'true' : 'false');
                             }
+
+                            // when a checkbox is changed, if checked and STANDARD, prompt for child info
+                            checkboxes.forEach(cb => cb.addEventListener('change', function(e) {
+                                const checked = cb.checked;
+                                const type = cb.dataset.type;
+                                if (checked && type === 'STANDARD') {
+                                    // open modal
+                                    currentCheckbox = cb;
+                                    modalSeatLabel.textContent = cb.value;
+                                    modalIsChild.checked = cb.dataset.isChild === 'true';
+                                    bsModal.show();
+                                } else {
+                                    // if unchecked, remove hidden input & dataset
+                                    if (!checked) {
+                                        cb.dataset.isChild = 'false';
+                                        const existing = document.getElementById('seatChild_' + cb.value);
+                                        if (existing) existing.remove();
+                                    }
+                                    updateDisplay();
+                                }
+                            }));
+
+                            modalConfirm.addEventListener('click', function() {
+                                if (!currentCheckbox) return;
+                                const isChild = modalIsChild.checked;
+                                currentCheckbox.dataset.isChild = isChild ? 'true' : 'false';
+                                setSeatChildHiddenInput(currentCheckbox.value, isChild);
+                                bsModal.hide();
+                                updateDisplay();
+                            });
+
+                            modalCancel.addEventListener('click', function() {
+                                if (!currentCheckbox) return;
+                                // cancel selection
+                                currentCheckbox.checked = false;
+                                currentCheckbox.dataset.isChild = 'false';
+                                const existing = document.getElementById('seatChild_' + currentCheckbox.value);
+                                if (existing) existing.remove();
+                                bsModal.hide();
+                                updateDisplay();
+                            });
 
                             checkboxes.forEach(cb => cb.addEventListener('change', updateDisplay));
                             voyageSelect.addEventListener('change', updateDateMax);

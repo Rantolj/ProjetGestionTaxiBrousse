@@ -26,6 +26,18 @@
                             <label for="nbrPlaces" class="form-label">Nombre de places</label>
                             <input type="number" class="form-control" id="nbrPlaces" th:field="*{nbrPlaces}" readonly/>
                         </div>
+
+                        <div class="mb-3 row">
+                            <div class="col-md-6">
+                                <label for="chargeMax" class="form-label">Charge max (kg)</label>
+                                <input type="number" step="0.01" class="form-control" id="chargeMax" th:field="*{chargeMax}" required/>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="consommation" class="form-label">Consommation (L/100km)</label>
+                                <input type="number" step="0.01" class="form-control" id="consommation" th:field="*{consommation}" required/>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="disposition" class="form-label">Disposition de place</label>
                             <input type="text" class="form-control" id="disposition" th:field="*{dispositionPlaces}"/>

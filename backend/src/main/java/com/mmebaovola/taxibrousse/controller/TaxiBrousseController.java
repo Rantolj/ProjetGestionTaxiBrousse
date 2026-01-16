@@ -51,7 +51,11 @@ public class TaxiBrousseController {
     public String createForm(Model model) {
         model.addAttribute("pageTitle", "Créer Taxi-brousse");
         model.addAttribute("currentPage", "taxibrousses");
-        model.addAttribute("taxi", new TaxiBrousse());
+        // If redirected back with a temporary taxi (validation error), do not overwrite
+        // it
+        if (!model.containsAttribute("taxi")) {
+            model.addAttribute("taxi", new TaxiBrousse());
+        }
         return "taxibrousses/form";
     }
 
@@ -72,6 +76,24 @@ public class TaxiBrousseController {
             redirectAttributes.addFlashAttribute("warningMessage",
                     "Le nombre de places a été ajusté à " + seats + " en fonction de la disposition.");
         }
+
+        // Ensure non-null numeric values so DB defaults are not bypassed with explicit
+        // nulls
+        if (taxi.getChargeMax() == null) {
+            taxi.setChargeMax(0.0);
+        }
+        if (taxi.getConsommation() == null) {
+            taxi.setConsommation(0.0);
+        }
+
+        // Basic validation
+        if (taxi.getImmatriculation() == null || taxi.getImmatriculation().isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "L'immatriculation est requise.");
+            // preserve entered values
+            redirectAttributes.addFlashAttribute("taxiTemp", taxi);
+            return "redirect:/taxibrousses/create";
+        }
+
         taxiBrousseRepository.save(taxi);
         redirectAttributes.addFlashAttribute("successMessage", "Taxi-brousse enregistré avec succès.");
         return "redirect:/taxibrousses";
