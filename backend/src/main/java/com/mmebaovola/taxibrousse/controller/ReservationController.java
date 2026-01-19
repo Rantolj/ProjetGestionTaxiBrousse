@@ -5,6 +5,7 @@ import com.mmebaovola.taxibrousse.entity.DetailsReservation;
 import com.mmebaovola.taxibrousse.entity.Voyage;
 import com.mmebaovola.taxibrousse.entity.CategoriePlace;
 import com.mmebaovola.taxibrousse.entity.TarifPlace;
+import com.mmebaovola.taxibrousse.entity.PassengerCategory; // added for passager categorie handling
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
@@ -157,22 +158,141 @@ public class ReservationController {
     public String save(Reservation reservation,
             @RequestParam(name = "dateReservationStr") String dateReservationStr,
             @RequestParam(name = "seatNumbers", required = false) List<String> seatNumbers,
+            @RequestParam(name = "seatChildFlags", required = false) List<String> seatChildFlags,
+            @RequestParam(name = "seatCategorieFlags", required = false) List<String> seatCategorieFlags,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
         if (dateReservationStr != null && !dateReservationStr.isBlank()) {
-            LocalDateTime dateTime = LocalDateTime.parse(dateReservationStr);
-            reservation.setDateReservation(dateTime);
+            try {
+                LocalDateTime dateTime = LocalDateTime.parse(dateReservationStr);
+                reservation.setDateReservation(dateTime);
+            } catch (java.time.format.DateTimeParseException ex) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Format de date invalide pour la réservation.");
+                return "redirect:/reservations/create";
+            }
         }
 
+        // Validation : la date de réservation ne doit pas être postérieure à la date de
+        // départ du voyage
+        Voyage voyage = null;
+        if (reservation.getVoyage() != null && reservation.getVoyage().getId() != null) {
+            var optVoyage = voyageRepository.findById(reservation.getVoyage().getId());
+            if (optVoyage.isPresent()) {
+                voyage = optVoyage.get();
+                if (voyage.getDateDepart() != null && reservation.getDateReservation() != null
+                        && reservation.getDateReservation().isAfter(voyage.getDateDepart())) {
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "La date de réservation ne peut pas être postérieure à la date de départ du voyage.");
+                    // Retourner au formulaire de création en conservant le voyage sélectionné
+                    return "redirect:/reservations/create?voyageId=" + voyage.getId();
+                }
+            }
+        }
+
+        // parse child flags (rétrocompatibilité)
+        Map<String, Boolean> childMap = new HashMap<>();
+        if (seatChildFlags != null) {
+            for (String f : seatChildFlags) {
+                if (f == null || !f.contains(":"))
+                    continue;
+                String[] parts = f.split(":", 2);
+                if (parts.length == 2) {
+                    childMap.put(parts[0], "true".equalsIgnoreCase(parts[1]) || "1".equals(parts[1]));
+                }
+            }
+        }
+
+        // parse categorie flags (nouveau système)
+        Map<String, PassengerCategory> categorieMap = new HashMap<>();
+        if (seatCategorieFlags != null) {
+            for (String f : seatCategorieFlags) {
+                if (f == null || !f.contains(":"))
+                    continue;
+                String[] parts = f.split(":", 2);
+                if (parts.length == 2) {
+                    try {
+                        PassengerCategory cat = PassengerCategory.valueOf(parts[1].toUpperCase());
+                        categorieMap.put(parts[0], cat);
+                    } catch (IllegalArgumentException e) {
+                        categorieMap.put(parts[0], PassengerCategory.ADULTE);
+                    }
+                }
+            }
+        }
+
+        // Precompute tarifs by type for this voyage date
+        Map<String, BigDecimal> tarifsByType = new HashMap<>();
+        if (voyage != null && voyage.getTrajet() != null && voyage.getDateDepart() != null) {
+            List<TarifPlace> tps = tarifPlaceRepository.findCurrentTarifsByTrajet(voyage.getTrajet().getId(),
+                    voyage.getDateDepart().toLocalDate());
+            for (TarifPlace t : tps) {
+                tarifsByType.put(t.getTypePlace(), t.getMontant());
+            }
+        }
+
+        // build seat label -> type map from taxi disposition
+        Map<String, String> seatTypeMap = new HashMap<>();
+        if (voyage != null && voyage.getTaxiBrousse() != null
+                && voyage.getTaxiBrousse().getDispositionPlaces() != null) {
+            String disposition = voyage.getTaxiBrousse().getDispositionPlaces();
+            String[] rawRows = disposition.split("/");
+            for (int i = 0; i < rawRows.length; i++) {
+                String row = rawRows[i];
+                char rowLetter = (char) ('A' + i);
+                int seatIndexInRow = 0;
+                for (int j = 0; j < row.length(); j++) {
+                    char c = row.charAt(j);
+                    if (c == 'x' || c == 'X')
+                        continue;
+                    seatIndexInRow++;
+                    String label = rowLetter + String.valueOf(seatIndexInRow);
+                    if (c == 'P' || c == 'p')
+                        seatTypeMap.put(label, "PREMIUM");
+                    else if (c == 'S' || c == 's' || c == 'O' || c == 'o')
+                        seatTypeMap.put(label, "STANDARD");
+                    else if (c == 'V' || c == 'v')
+                        seatTypeMap.put(label, "VIP");
+                }
+            }
+        }
+
+        // calculate montant total server-side to be authoritative
+        BigDecimal montantTotal = BigDecimal.ZERO;
+        final BigDecimal enfantStandardPrix = BigDecimal.valueOf(50000);
+
+        if (seatNumbers != null && !seatNumbers.isEmpty()) {
+            for (String seat : seatNumbers) {
+                if (seat == null || seat.trim().isEmpty())
+                    continue;
+                String label = seat.trim();
+                String type = seatTypeMap.getOrDefault(label, "STANDARD");
+                PassengerCategory categorie = categorieMap.getOrDefault(label, PassengerCategory.ADULTE);
+                BigDecimal basePrix = tarifsByType.getOrDefault(type, BigDecimal.ZERO);
+
+                // Calculer le prix avec réduction selon la catégorie
+                BigDecimal prix = calculatePrixWithReduction(basePrix, type, categorie, enfantStandardPrix);
+                montantTotal = montantTotal.add(prix);
+            }
+        }
+
+        reservation.setMontantTotal(montantTotal.doubleValue());
         reservationRepository.save(reservation);
 
         int placesReservees = 0;
         if (seatNumbers != null && !seatNumbers.isEmpty()) {
             for (String seat : seatNumbers) {
                 if (seat != null && !seat.trim().isEmpty()) {
+                    String label = seat.trim();
                     DetailsReservation details = new DetailsReservation();
                     details.setReservation(reservation);
-                    details.setNumeroPlace(seat.trim());
+                    details.setNumeroPlace(label);
+
+                    PassengerCategory categorie = categorieMap.getOrDefault(label, PassengerCategory.ADULTE);
+                    boolean isEnf = categorie == PassengerCategory.ENFANT;
+
+                    details.setTypePlace(seatTypeMap.getOrDefault(label, "STANDARD"));
+                    details.setIsEnfant(isEnf);
+                    details.setPassagerCategorie(categorie);
                     detailsReservationRepository.save(details);
                     placesReservees++;
                 }
@@ -180,8 +300,40 @@ public class ReservationController {
         }
 
         redirectAttributes.addFlashAttribute("successMessage",
-                "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s).");
+                "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s). Montant: " + montantTotal
+                        + " Ar");
         return "redirect:/reservations";
+    }
+
+    /**
+     * Calcule le prix avec réduction selon la catégorie de passager.
+     * - ADULTE: tarif plein (0%)
+     * - ENFANT: -50% sur STANDARD, tarif fixe 50000 Ar
+     * - SENIOR: -20% sur tous les types
+     * - JEUNE: -10% sur tous les types
+     * - ETUDIANT: -15% sur tous les types
+     */
+    private BigDecimal calculatePrixWithReduction(BigDecimal basePrix, String type, PassengerCategory categorie,
+            BigDecimal enfantStandardPrix) {
+        switch (categorie) {
+            case ENFANT:
+                if ("STANDARD".equalsIgnoreCase(type)) {
+                    return enfantStandardPrix;
+                }
+                return basePrix; // Pas de réduction enfant pour les autres types
+            case SENIOR:
+                // -20%
+                return basePrix.multiply(BigDecimal.valueOf(0.80)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case JEUNE:
+                // -10%
+                return basePrix.multiply(BigDecimal.valueOf(0.90)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case ETUDIANT:
+                // -15%
+                return basePrix.multiply(BigDecimal.valueOf(0.85)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case ADULTE:
+            default:
+                return basePrix;
+        }
     }
 
     @GetMapping("/edit/{id}")
@@ -285,7 +437,22 @@ public class ReservationController {
         List<Voyage> voyagesTrouves = new ArrayList<>();
 
         if (departId != null && arriveeId != null && date != null && !date.isBlank()) {
-            LocalDate targetDate = LocalDate.parse(date);
+            LocalDate targetDate;
+            try {
+                targetDate = LocalDate.parse(date); // yyyy-MM-dd
+            } catch (java.time.format.DateTimeParseException ex) {
+                // accept dd/MM/yyyy as fallback
+                java.time.format.DateTimeFormatter alt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                try {
+                    targetDate = LocalDate.parse(date, alt);
+                } catch (java.time.format.DateTimeParseException ex2) {
+                    model.addAttribute("errorMessage", "Format de date invalide. Utilisez yyyy-MM-dd ou dd/MM/yyyy");
+                    model.addAttribute("arrets", arretRepository.findAll());
+                    model.addAttribute("pageTitle", "Recherche de voyages");
+                    model.addAttribute("currentPage", "reservations-search");
+                    return "reservations/search";
+                }
+            }
 
             LocalTime start;
             LocalTime end;

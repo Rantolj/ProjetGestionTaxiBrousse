@@ -21,4 +21,18 @@ public class DetailsReservation {
     private Reservation reservation;
 
     private String numeroPlace;
+
+    @Column(name = "personne_id")
+    private Long personneId;
+
+    @Column(name = "type_place")
+    private String typePlace;
+
+    @Column(name = "is_enfant", nullable = false)
+    private Boolean isEnfant = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "passager_categorie", nullable = false)
+    private PassengerCategory passagerCategorie = PassengerCategory.ADULTE;
+
 }

@@ -69,8 +69,13 @@
                     <label for="date" class="form-label">Date</label>
                     <input type="date" class="form-control" id="date" name="date" th:value="${selectedDate}" required>
                 </div>
+
+                <div class="col-md-2">
+                    <!-- debug: show number of loaded stops -->
+                    <small class="text-muted">Arrêts disponibles: <span th:text="${#lists.size(arrets)}">0</span></small>
+                </div>
                
-                <div class="col-md-3 text-end">
+                <div class="col-md-2 text-end">
                     <button type="submit" id="searchBtn" class="btn btn-primary" style="min-width:140px;">
                         <i class="bi bi-search"></i> Rechercher
                     </button>
