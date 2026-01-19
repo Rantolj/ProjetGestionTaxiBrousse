@@ -34,4 +34,5 @@ public class DetailsReservation {
     @Enumerated(EnumType.STRING)
     @Column(name = "passager_categorie", nullable = false)
     private PassengerCategory passagerCategorie = PassengerCategory.ADULTE;
+
 }

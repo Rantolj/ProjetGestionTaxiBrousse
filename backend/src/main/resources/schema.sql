@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS details_reservations
     numero_place   VARCHAR(10) NOT NULL,
     personne_id    INTEGER REFERENCES personnes (id),
     type_place     VARCHAR(50),
-    is_enfant      BOOLEAN NOT NULL DEFAULT FALSE, --nouv 16/01/2026
+    is_enfant      BOOLEAN NOT NULL DEFAULT FALSE,--nouv 16/01/2026
     passager_categorie VARCHAR(50) NOT NULL DEFAULT 'ADULTE' -- ADULTE, ENFANT, JEUNE, SENIOR, ETUDIANT
 );
 

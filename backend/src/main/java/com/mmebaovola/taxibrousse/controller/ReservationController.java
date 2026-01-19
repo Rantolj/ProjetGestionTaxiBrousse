@@ -159,6 +159,7 @@ public class ReservationController {
             @RequestParam(name = "dateReservationStr") String dateReservationStr,
             @RequestParam(name = "seatNumbers", required = false) List<String> seatNumbers,
             @RequestParam(name = "seatChildFlags", required = false) List<String> seatChildFlags,
+            @RequestParam(name = "seatCategorieFlags", required = false) List<String> seatCategorieFlags,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
         if (dateReservationStr != null && !dateReservationStr.isBlank()) {
@@ -188,7 +189,7 @@ public class ReservationController {
             }
         }
 
-        // parse child flags
+        // parse child flags (rétrocompatibilité)
         Map<String, Boolean> childMap = new HashMap<>();
         if (seatChildFlags != null) {
             for (String f : seatChildFlags) {
@@ -197,6 +198,24 @@ public class ReservationController {
                 String[] parts = f.split(":", 2);
                 if (parts.length == 2) {
                     childMap.put(parts[0], "true".equalsIgnoreCase(parts[1]) || "1".equals(parts[1]));
+                }
+            }
+        }
+
+        // parse categorie flags (nouveau système)
+        Map<String, PassengerCategory> categorieMap = new HashMap<>();
+        if (seatCategorieFlags != null) {
+            for (String f : seatCategorieFlags) {
+                if (f == null || !f.contains(":"))
+                    continue;
+                String[] parts = f.split(":", 2);
+                if (parts.length == 2) {
+                    try {
+                        PassengerCategory cat = PassengerCategory.valueOf(parts[1].toUpperCase());
+                        categorieMap.put(parts[0], cat);
+                    } catch (IllegalArgumentException e) {
+                        categorieMap.put(parts[0], PassengerCategory.ADULTE);
+                    }
                 }
             }
         }
@@ -247,13 +266,11 @@ public class ReservationController {
                     continue;
                 String label = seat.trim();
                 String type = seatTypeMap.getOrDefault(label, "STANDARD");
-                boolean isEnfant = childMap.getOrDefault(label, false);
-                BigDecimal prix = BigDecimal.ZERO;
-                if ("STANDARD".equalsIgnoreCase(type) && isEnfant) {
-                    prix = enfantStandardPrix;
-                } else {
-                    prix = tarifsByType.getOrDefault(type, BigDecimal.ZERO);
-                }
+                PassengerCategory categorie = categorieMap.getOrDefault(label, PassengerCategory.ADULTE);
+                BigDecimal basePrix = tarifsByType.getOrDefault(type, BigDecimal.ZERO);
+
+                // Calculer le prix avec réduction selon la catégorie
+                BigDecimal prix = calculatePrixWithReduction(basePrix, type, categorie, enfantStandardPrix);
                 montantTotal = montantTotal.add(prix);
             }
         }
@@ -269,10 +286,13 @@ public class ReservationController {
                     DetailsReservation details = new DetailsReservation();
                     details.setReservation(reservation);
                     details.setNumeroPlace(label);
-                    boolean isEnf = childMap.getOrDefault(label, false);
+
+                    PassengerCategory categorie = categorieMap.getOrDefault(label, PassengerCategory.ADULTE);
+                    boolean isEnf = categorie == PassengerCategory.ENFANT;
+
                     details.setTypePlace(seatTypeMap.getOrDefault(label, "STANDARD"));
                     details.setIsEnfant(isEnf);
-                    details.setPassagerCategorie(isEnf ? PassengerCategory.ENFANT : PassengerCategory.ADULTE);
+                    details.setPassagerCategorie(categorie);
                     detailsReservationRepository.save(details);
                     placesReservees++;
                 }
@@ -283,6 +303,37 @@ public class ReservationController {
                 "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s). Montant: " + montantTotal
                         + " Ar");
         return "redirect:/reservations";
+    }
+
+    /**
+     * Calcule le prix avec réduction selon la catégorie de passager.
+     * - ADULTE: tarif plein (0%)
+     * - ENFANT: -50% sur STANDARD, tarif fixe 50000 Ar
+     * - SENIOR: -20% sur tous les types
+     * - JEUNE: -10% sur tous les types
+     * - ETUDIANT: -15% sur tous les types
+     */
+    private BigDecimal calculatePrixWithReduction(BigDecimal basePrix, String type, PassengerCategory categorie,
+            BigDecimal enfantStandardPrix) {
+        switch (categorie) {
+            case ENFANT:
+                if ("STANDARD".equalsIgnoreCase(type)) {
+                    return enfantStandardPrix;
+                }
+                return basePrix; // Pas de réduction enfant pour les autres types
+            case SENIOR:
+                // -20%
+                return basePrix.multiply(BigDecimal.valueOf(0.80)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case JEUNE:
+                // -10%
+                return basePrix.multiply(BigDecimal.valueOf(0.90)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case ETUDIANT:
+                // -15%
+                return basePrix.multiply(BigDecimal.valueOf(0.85)).setScale(0, java.math.RoundingMode.HALF_UP);
+            case ADULTE:
+            default:
+                return basePrix;
+        }
     }
 
     @GetMapping("/edit/{id}")
