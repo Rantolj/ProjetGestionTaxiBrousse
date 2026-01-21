@@ -16,3 +16,7 @@ Thumbs.db
 
 # Spring Boot devtools
 /restart
+
+#sql
+*.sql
+*.sqlite

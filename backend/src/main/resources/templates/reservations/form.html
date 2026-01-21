@@ -2,14 +2,209 @@
 <html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
 <head>
     <title>Réservation</title>
+    <style>
+        .reservation-container {
+            display: flex;
+            gap: 2rem;
+            align-items: stretch;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .reservation-form-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .reservation-image-column {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .reservation-image-column img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+        }
+        
+        @media (max-width: 992px) {
+            .reservation-container {
+                flex-direction: column;
+                min-height: auto;
+            }
+            
+            .reservation-image-column {
+                min-height: 300px;
+            }
+        }
+        
+        /* Styles pour les types de places */
+        .seat-vip {
+            background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%) !important;
+            border-color: #5a33a2 !important;
+            color: #fff !important;
+            font-weight: 700;
+        }
+        .seat-vip:hover {
+            background: linear-gradient(135deg, #7c4dd1 0%, #b26bff 100%) !important;
+        }
+        .seat-vip.disabled {
+            background: #ccc !important;
+            border-color: #999 !important;
+        }
+
+        .seat-premium {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%) !important;
+            border-color: #e6a800 !important;
+            color: #000 !important;
+            font-weight: 600;
+        }
+        .seat-premium:hover {
+            background: linear-gradient(135deg, #ffe033 0%, #ffcc00 100%) !important;
+        }
+        .seat-premium.disabled {
+            background: #ccc !important;
+            border-color: #999 !important;
+        }
+        
+        .seat-standard {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+            border-color: #1e7e34 !important;
+            color: #fff !important;
+        }
+        .seat-standard:hover {
+            background: linear-gradient(135deg, #34ce57 0%, #2ddba1 100%) !important;
+        }
+        .seat-standard.disabled {
+            background: #6c757d !important;
+            border-color: #545b62 !important;
+        }
+        
+        .seat-occupied {
+            background: #6c757d !important;
+            border-color: #545b62 !important;
+            color: #fff !important;
+            cursor: not-allowed;
+        }
+        
+        .seat-btn {
+            width: 44px;
+            height: 36px;
+            padding: 2px;
+            font-size: 0.7rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.1;
+        }
+        
+        .seat-btn .seat-label {
+            font-weight: 600;
+        }
+        
+        .seat-btn .seat-type {
+            font-size: 0.55rem;
+            opacity: 0.9;
+        }
+        
+        .btn-check:checked + .seat-btn {
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .tarifs-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 1rem;
+        }
+        
+        .tarif-badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+
+        .bg-vip {
+            background-color: #6f42c1 !important;
+            color: #fff !important;
+        }
+
+        /* Styles pour stabiliser le modal */
+        #seatModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1055 !important;
+        }
+        
+        #seatModal .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-width: 500px !important;
+        }
+        
+        #seatModal .modal-content {
+            position: relative !important;
+            background-color: #fff !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1050 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="container-fluid">
-        <h2 class="mb-4">Formulaire Réservation</h2>
+    <div class="container-fluid px-4 py-4">
+        <h2 class="mb-4">Créer Réservation</h2>
 
-        <div class="row">
-            <div class="col-md-6">
+        <div th:if="${errorMessage != null}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div class="reservation-container">
+            <div class="reservation-form-column">
                 <form method="POST" action="/reservations/save" class="card p-4">
                     <input type="hidden" name="id" th:value="${reservation?.id}">
 
@@ -19,6 +214,7 @@
                             <option value="">Sélectionner un voyage</option>
                                 <option th:each="voyage : ${voyages}" th:value="${voyage.id}"
                                     th:text="${voyage.trajet?.nom + ' - ' + #temporals.format(voyage.dateDepart, 'dd/MM/yyyy')}"
+                                    th:attr="data-date=${voyage.dateDepart != null ? #temporals.format(voyage.dateDepart, 'yyyy-MM-dd''T''HH:mm') : ''}"
                                     th:selected="${selectedVoyageId != null and selectedVoyageId == voyage.id}"></option>
                         </select>
                     </div>
@@ -36,7 +232,8 @@
                     <div class="mb-3">
                         <label for="montantTotal" class="form-label">Montant Total</label>
                         <input type="number" class="form-control" id="montantTotal" name="montantTotal" step="0.01"
-                               th:value="${reservation?.montantTotal}" required>
+                               th:value="${reservation?.montantTotal}" required readonly>
+                        <small class="text-muted">Calculé automatiquement selon les places sélectionnées</small>
                     </div>
 
                     
@@ -47,63 +244,433 @@
                     </div>
 
                     <div class="mb-3" th:if="${seatRows != null}">
+                        <!-- Affichage des tarifs -->
+                        <div class="tarifs-info" th:if="${tarifsByType != null and !tarifsByType.isEmpty()}">
+                            <strong><i class="bi bi-tag-fill me-2"></i>Tarifs pour ce trajet :</strong>
+                            <div class="d-flex gap-3 mt-2">
+                                <span th:if="${tarifsByType['VIP'] != null}" class="tarif-badge badge bg-vip">
+                                    VIP: <span th:text="${#numbers.formatDecimal(tarifsByType['VIP'], 1, 'COMMA', 0, 'POINT')} + ' Ar'"></span>
+                                </span>
+                                <span th:if="${tarifsByType['PREMIUM'] != null}" class="tarif-badge badge bg-warning text-dark">
+                                    PREMIUM: <span th:text="${#numbers.formatDecimal(tarifsByType['PREMIUM'], 1, 'COMMA', 0, 'POINT')} + ' Ar'"></span>
+                                </span>
+                                <span th:if="${tarifsByType['STANDARD'] != null}" class="tarif-badge badge bg-success">
+                                    STANDARD: <span th:text="${#numbers.formatDecimal(tarifsByType['STANDARD'], 1, 'COMMA', 0, 'POINT')} + ' Ar'"></span>
+                                </span>
+                            </div>
+                        </div>
+
                         <label class="form-label">Choisir les places <span class="text-muted">(vous pouvez en sélectionner plusieurs)</span></label>
 
                         <div class="border rounded p-3 mb-2 bg-light">
                             <div class="text-center mb-2">
-                                <small class="text-muted">Avant du véhicule</small>
+                                <small class="text-muted fw-bold">🚐 Avant du véhicule</small>
                             </div>
                             <div th:each="row : ${seatRows}" class="d-flex justify-content-center mb-1">
                                 <div th:each="seat : ${row}" class="mx-1">
-                                    <div th:if="${!seat.seat}" style="width:28px;height:28px;"></div>
+                                    <div th:if="${!seat.seat}" style="width:44px;height:36px;"></div>
                                     <div th:if="${seat.seat}">
                                         <input type="checkbox" class="btn-check"
                                                name="seatNumbers"
                                                th:id="${'seat-' + seat.label}"
                                                th:value="${seat.label}"
+                                               th:data-type="${seat.type}"
+                                               th:data-prix="${tarifsByType != null && tarifsByType[seat.type] != null ? tarifsByType[seat.type] : (seat.prix != null ? seat.prix : 0)}"
                                                autocomplete="off"
                                                th:disabled="${!seat.available}">
-                                        <label class="btn btn-sm"
+                                        <label class="btn seat-btn"
                                                th:for="${'seat-' + seat.label}"
-                                               th:classappend="${seat.available} ? ' btn-outline-success' : ' btn-outline-secondary disabled'"
-                                               style="width:40px;height:32px;padding:2px;font-size:0.75rem;">
-                                            <span th:text="${seat.label}"></span>
+                                               th:classappend="${!seat.available ? 'seat-occupied' : (seat.vip ? 'seat-vip' : (seat.premium ? 'seat-premium' : 'seat-standard'))}">
+                                            <span class="seat-label" th:text="${seat.label}"></span>
+                                            <span class="seat-type" th:text="${seat.vip ? '♛' : (seat.premium ? '★' : '')}"></span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <div class="text-center mt-2">
-                                <small class="text-muted">Arrière du véhicule</small>
+                                <small class="text-muted fw-bold">Arriere du vehicule</small>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-center gap-3">
-                            <span class="badge bg-success">Disponible</span>
-                            <span class="badge bg-secondary">Occupée</span>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%);"></span>
+                                <span>VIP (♛)</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);"></span>
+                                <span>Premium (★)</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);"></span>
+                                <span>Standard</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #6c757d;"></span>
+                                <span>Occupée</span>
+                            </span>
                         </div>
 
-                        <div class="mt-3 p-2 bg-white border rounded">
-                            <strong>Places sélectionnées : </strong>
-                            <span id="selectedSeatsDisplay" class="text-primary">Aucune</span>
-                            <span class="float-end"><strong>Nombre : </strong><span id="seatCount">0</span></span>
+                        <div class="mt-3 p-3 bg-white border rounded">
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <strong>Places sélectionnées :</strong>
+                                    <span id="selectedSeatsDisplay" class="text-primary">Aucune</span>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <strong>VIP:</strong> <span id="vipCount" class="badge bg-vip">0</span>
+                                    <strong>Premium:</strong> <span id="premiumCount" class="badge bg-warning text-dark">0</span>
+                                    <strong class="ms-2">Standard:</strong> <span id="standardCount" class="badge bg-success">0</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Tableau des passagers avec catégories -->
+                            <div id="passengersTable" class="mb-3" style="display: none;">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Place</th>
+                                            <th>Type</th>
+                                            <th>Catégorie Passager</th>
+                                            <th>Prix</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="passengersTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><strong>Total places :</strong> <span id="seatCount" class="badge bg-primary">0</span></span>
+                                <span class="fs-5"><strong>Montant :</strong> <span id="totalAmount" class="text-success fw-bold">0 Ar</span></span>
+                            </div>
                         </div>
                     </div>
 
                     <script th:inline="javascript">
                         document.addEventListener('DOMContentLoaded', function() {
-                            const checkboxes = document.querySelectorAll('input[name="seatNumbers"]');
+                            try {
+                                function getCheckboxes() { return document.querySelectorAll('input[name="seatNumbers"]'); }
+                                let checkboxes = getCheckboxes();
+                                console.log('Reservation form: seat checkboxes found =', checkboxes.length);
                             const display = document.getElementById('selectedSeatsDisplay');
                             const countDisplay = document.getElementById('seatCount');
+                            const vipCountDisplay = document.getElementById('vipCount');
+                            const premiumCountDisplay = document.getElementById('premiumCount');
+                            const standardCountDisplay = document.getElementById('standardCount');
+                            const totalAmountDisplay = document.getElementById('totalAmount');
+                            const montantTotalInput = document.getElementById('montantTotal');
+                            const voyageSelect = document.getElementById('voyage');
+                            const dateReservationInput = document.getElementById('dateReservation');
 
-                            function updateDisplay() {
-                                const selected = Array.from(checkboxes)
-                                    .filter(cb => cb.checked)
-                                    .map(cb => cb.value);
-                                display.textContent = selected.length > 0 ? selected.join(', ') : 'Aucune';
-                                countDisplay.textContent = selected.length;
+                            // modal elements (guarded: may be absent on some pages)
+                            const seatModalEl = document.getElementById('seatModal');
+                            let bsModal = null;
+                            if (seatModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                bsModal = new bootstrap.Modal(seatModalEl, { backdrop: 'static', keyboard: false });
+                            } else {
+                                console.warn('seatModal element or bootstrap.Modal not available; falling back to no-modal behaviour');
+                            }
+                            const modalSeatLabel = document.getElementById('modalSeatLabel');
+                            const modalSeatType = document.getElementById('modalSeatType');
+                            const modalBasePrix = document.getElementById('modalBasePrix');
+                            const modalPassagerCategorie = document.getElementById('modalPassagerCategorie');
+                            const modalFinalPrix = document.getElementById('modalFinalPrix');
+                            const modalConfirm = document.getElementById('modalConfirm');
+                            const modalCancel = document.getElementById('modalCancel');
+                            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+                            let currentCheckbox = null;
+
+                            // Fonction pour annuler la sélection
+                            function cancelSelection() {
+                                if (!currentCheckbox) return;
+                                currentCheckbox.checked = false;
+                                currentCheckbox.dataset.passagerCategorie = 'ADULTE';
+                                currentCheckbox.dataset.isChild = 'false';
+                                const existingCat = document.getElementById('seatCategorie_' + currentCheckbox.value);
+                                if (existingCat) existingCat.remove();
+                                const existingChild = document.getElementById('seatChild_' + currentCheckbox.value);
+                                if (existingChild) existingChild.remove();
+                                if (bsModal) bsModal.hide();
+                                updateDisplay();
                             }
 
-                            checkboxes.forEach(cb => cb.addEventListener('change', updateDisplay));
+                            // Définition des réductions par catégorie de passager (en pourcentage)
+                            const CATEGORY_REDUCTIONS = {
+                                'ADULTE': 0,      // Tarif plein
+                                'ENFANT': 50,     // -50% (uniquement STANDARD)
+                                'SENIOR': 20,     // -20% (tous types)
+                                'JEUNE': 10,      // -10% (tous types)
+                                'ETUDIANT': 15    // -15% (tous types)
+                            };
+
+                            // Prix fixe enfant pour STANDARD (rétrocompatibilité)
+                            const ENFANT_STANDARD_PRIX = 50000;
+
+                            function formatNumber(num) {
+                                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                            }
+
+                            // Calcule le prix final en fonction de la catégorie et du type de place
+                            function calculatePrix(basePrix, type, categorie) {
+                                // Cas spécial: Enfant sur place STANDARD = prix fixe
+                                if (categorie === 'ENFANT' && type === 'STANDARD') {
+                                    return ENFANT_STANDARD_PRIX;
+                                }
+                                
+                                // Pour les autres catégories, appliquer la réduction
+                                const reduction = CATEGORY_REDUCTIONS[categorie] || 0;
+                                const prixReduit = basePrix * (1 - reduction / 100);
+                                return Math.round(prixReduit);
+                            }
+
+                            function updateModalPrix() {
+                                if (!currentCheckbox) return;
+                                const basePrix = parseFloat(currentCheckbox.dataset.prix) || 0;
+                                const type = currentCheckbox.dataset.type;
+                                const categorie = modalPassagerCategorie.value;
+                                const finalPrix = calculatePrix(basePrix, type, categorie);
+                                
+                                const reduction = CATEGORY_REDUCTIONS[categorie] || 0;
+                                let infoText = formatNumber(finalPrix) + ' Ar';
+                                if (reduction > 0) {
+                                    if (categorie === 'ENFANT' && type === 'STANDARD') {
+                                        infoText += ' (tarif fixe enfant)';
+                                    } else {
+                                        infoText += ' (-' + reduction + '%)';
+                                    }
+                                }
+                                modalFinalPrix.textContent = infoText;
+                            }
+
+                            // Listener pour le changement de catégorie dans le modal (gardé si présent)
+                            if (modalPassagerCategorie) {
+                                modalPassagerCategorie.addEventListener('change', updateModalPrix);
+                            }
+
+                            function updateDisplay() {
+                                // re-query checkboxes in case DOM changed
+                                const currentCheckboxes = getCheckboxes();
+                                const selected = Array.from(currentCheckboxes).filter(cb => cb.checked);
+                                const labels = selected.map(cb => cb.value);
+                                console.log('updateDisplay called, selected count =', selected.length);
+
+                                let vipCount = 0;
+                                let premiumCount = 0;
+                                let standardCount = 0;
+                                let totalAmount = 0;
+
+                                // Construire le tableau des passagers
+                                const tableBody = document.getElementById('passengersTableBody');
+                                const tableContainer = document.getElementById('passengersTable');
+                                
+                                if (tableBody) {
+                                    tableBody.innerHTML = '';
+                                    
+                                    selected.forEach(cb => {
+                                        const type = cb.dataset.type || 'STANDARD';
+                                        const rawPrix = cb.getAttribute('data-prix');
+                                        const basePrix = parseFloat(rawPrix) || 0;
+                                        const categorie = cb.dataset.passagerCategorie || 'ADULTE';
+
+                                        // Calculer le prix avec réduction selon la catégorie
+                                        const prix = calculatePrix(basePrix, type, categorie);
+
+                                        if (type === 'VIP') {
+                                            vipCount++;
+                                        } else if (type === 'PREMIUM') {
+                                            premiumCount++;
+                                        } else {
+                                            standardCount++;
+                                        }
+                                        totalAmount += prix;
+
+                                        // Créer la ligne du tableau
+                                        const tr = document.createElement('tr');
+                                        
+                                        // Colonne Place
+                                        const tdPlace = document.createElement('td');
+                                        tdPlace.innerHTML = '<strong>' + cb.value + '</strong>';
+                                        tr.appendChild(tdPlace);
+                                        
+                                        // Colonne Type
+                                        const tdType = document.createElement('td');
+                                        const typeBadgeClass = type === 'VIP' ? 'bg-vip' : (type === 'PREMIUM' ? 'bg-warning text-dark' : 'bg-success');
+                                        tdType.innerHTML = '<span class="badge ' + typeBadgeClass + '">' + type + '</span>';
+                                        tr.appendChild(tdType);
+                                        
+                                        // Colonne Catégorie (select)
+                                        const tdCategorie = document.createElement('td');
+                                        const select = document.createElement('select');
+                                        select.className = 'form-select form-select-sm';
+                                        select.innerHTML = `
+                                            <option value="ADULTE" ${categorie === 'ADULTE' ? 'selected' : ''}>Adulte (tarif plein)</option>
+                                            <option value="ENFANT" ${categorie === 'ENFANT' ? 'selected' : ''}>Enfant (-50%)</option>
+                                            <option value="SENIOR" ${categorie === 'SENIOR' ? 'selected' : ''}>Senior (-20%)</option>
+                                            <option value="JEUNE" ${categorie === 'JEUNE' ? 'selected' : ''}>Jeune (-10%)</option>
+                                            <option value="ETUDIANT" ${categorie === 'ETUDIANT' ? 'selected' : ''}>Étudiant (-15%)</option>
+                                        `;
+                                        select.addEventListener('change', function() {
+                                            cb.dataset.passagerCategorie = this.value;
+                                            cb.dataset.isChild = (this.value === 'ENFANT') ? 'true' : 'false';
+                                            setSeatCategorieHiddenInput(cb.value, this.value);
+                                            // update child flag for compatibility
+                                            const childInputId = 'seatChild_' + cb.value;
+                                            let childInput = document.getElementById(childInputId);
+                                            if (!childInput) {
+                                                childInput = document.createElement('input');
+                                                childInput.type = 'hidden';
+                                                childInput.name = 'seatChildFlags';
+                                                childInput.id = childInputId;
+                                                document.querySelector('form').appendChild(childInput);
+                                            }
+                                            childInput.value = cb.value + ':' + (cb.dataset.isChild === 'true' ? 'true' : 'false');
+                                            updateDisplay();
+                                        });
+                                        tdCategorie.appendChild(select);
+                                        tr.appendChild(tdCategorie);
+                                        
+                                        // Colonne Prix
+                                        const tdPrix = document.createElement('td');
+                                        const reduction = CATEGORY_REDUCTIONS[categorie] || 0;
+                                        let prixText = formatNumber(prix) + ' Ar';
+                                        if (reduction > 0) {
+                                            if (categorie === 'ENFANT' && type === 'STANDARD') {
+                                                prixText += ' <small class="text-muted">(fixe)</small>';
+                                            } else {
+                                                prixText += ' <small class="text-success">(-' + reduction + '%)</small>';
+                                            }
+                                        }
+                                        tdPrix.innerHTML = prixText;
+                                        tr.appendChild(tdPrix);
+                                        
+                                        tableBody.appendChild(tr);
+                                    });
+                                    
+                                    // Afficher/masquer le tableau
+                                    if (tableContainer) {
+                                        tableContainer.style.display = selected.length > 0 ? 'block' : 'none';
+                                    }
+                                }
+
+                                display.textContent = labels.length > 0 ? labels.join(', ') : 'Aucune';
+                                countDisplay.textContent = labels.length;
+                                vipCountDisplay.textContent = vipCount;
+                                premiumCountDisplay.textContent = premiumCount;
+                                standardCountDisplay.textContent = standardCount;
+                                totalAmountDisplay.textContent = formatNumber(totalAmount) + ' Ar';
+                                if (montantTotalInput) montantTotalInput.value = totalAmount;
+                            }
+
+                            function updateDateMax() {
+                                try {
+                                    if (!voyageSelect || !dateReservationInput) return;
+                                    const opt = voyageSelect.options[voyageSelect.selectedIndex];
+                                    const date = opt ? opt.getAttribute('data-date') : null;
+                                    if (date) {
+                                        // set default reservation date to voyage date/time
+                                        dateReservationInput.value = date;
+                                    }
+                                } catch (e) { console.warn('updateDateMax failed', e); }
+                            }
+
+                            function setSeatCategorieHiddenInput(label, categorie) {
+                                const name = 'seatCategorieFlags';
+                                const inputId = 'seatCategorie_' + label;
+                                let existing = document.getElementById(inputId);
+                                if (!existing) {
+                                    existing = document.createElement('input');
+                                    existing.type = 'hidden';
+                                    existing.name = name;
+                                    existing.id = inputId;
+                                    document.querySelector('form').appendChild(existing);
+                                }
+                                existing.value = label + ':' + categorie;
+                            }
+
+                            // Attach change listeners to current checkboxes (handles dynamic DOM)
+                            function attachCheckboxListeners() {
+                                const current = getCheckboxes();
+                                current.forEach(cb => {
+                                    if (cb._reservationListenerAttached) return;
+                                    cb._reservationListenerAttached = true;
+                                    cb.addEventListener('change', function(e) {
+                                        const checked = cb.checked;
+                                        if (checked) {
+                                            // Par défaut ADULTE, l'utilisateur peut changer via le tableau
+                                            const savedCategorie = cb.dataset.passagerCategorie || 'ADULTE';
+                                            cb.dataset.passagerCategorie = savedCategorie;
+                                            cb.dataset.isChild = (savedCategorie === 'ENFANT') ? 'true' : 'false';
+                                            setSeatCategorieHiddenInput(cb.value, savedCategorie);
+                                            // ensure compatibility with child flags
+                                            const childInputId = 'seatChild_' + cb.value;
+                                            let childInput = document.getElementById(childInputId);
+                                            if (!childInput) {
+                                                childInput = document.createElement('input');
+                                                childInput.type = 'hidden';
+                                                childInput.name = 'seatChildFlags';
+                                                childInput.id = childInputId;
+                                                document.querySelector('form').appendChild(childInput);
+                                            }
+                                            childInput.value = cb.value + ':' + (cb.dataset.isChild === 'true' ? 'true' : 'false');
+                                        } else {
+                                            // Si décoché, supprimer les données
+                                            cb.dataset.passagerCategorie = 'ADULTE';
+                                            cb.dataset.isChild = 'false';
+                                            const existingCat = document.getElementById('seatCategorie_' + cb.value);
+                                            if (existingCat) existingCat.remove();
+                                            const existingChild = document.getElementById('seatChild_' + cb.value);
+                                            if (existingChild) existingChild.remove();
+                                        }
+                                        updateDisplay();
+                                    });
+                                });
+                            }
+
+                            // initial attach and whenever needed
+                            attachCheckboxListeners();
+
+                            if (modalConfirm) {
+                                modalConfirm.addEventListener('click', function() {
+                                    if (!currentCheckbox) return;
+                                    const categorie = modalPassagerCategorie ? modalPassagerCategorie.value : (currentCheckbox.dataset.passagerCategorie || 'ADULTE');
+                                    const isChild = categorie === 'ENFANT';
+
+                                    currentCheckbox.dataset.passagerCategorie = categorie;
+                                    currentCheckbox.dataset.isChild = isChild ? 'true' : 'false';
+
+                                    setSeatCategorieHiddenInput(currentCheckbox.value, categorie);
+
+                                    // Garder la compatibilité avec seatChildFlags
+                                    const childInputId = 'seatChild_' + currentCheckbox.value;
+                                    let childInput = document.getElementById(childInputId);
+                                    if (!childInput) {
+                                        childInput = document.createElement('input');
+                                        childInput.type = 'hidden';
+                                        childInput.name = 'seatChildFlags';
+                                        childInput.id = childInputId;
+                                        document.querySelector('form').appendChild(childInput);
+                                    }
+                                    childInput.value = currentCheckbox.value + ':' + (isChild ? 'true' : 'false');
+
+                                    if (bsModal) try { bsModal.hide(); } catch(e){console.warn('bsModal.hide failed', e);} 
+                                    updateDisplay();
+                                });
+                            }
+
+                            if (modalCancel) modalCancel.addEventListener('click', cancelSelection);
+                            // Aussi annuler si on clique sur le bouton X de fermeture
+                            if (modalCloseBtn) modalCloseBtn.addEventListener('click', cancelSelection);
+                            if (voyageSelect) voyageSelect.addEventListener('change', updateDateMax);
+
+                            // Calcul initial
+                            updateDisplay();
+                            updateDateMax();
+                        } catch (e) {
+                            console.error('Reservation JS error', e);
+                        }
                         });
                     </script>
 
@@ -117,8 +684,48 @@
                     </div>
                 </form>
             </div>
+            
+            <div class="reservation-image-column">
+                <img th:src="@{/images/taxi-brousse.jpg}" 
+                     alt="Taxi-Brousse" class="img-fluid">
+            </div>
         </div>
     </div>
+</div>
+
+<!-- Modal: seat passenger info (en dehors du formulaire pour éviter les conflits) -->
+<div class="modal fade" id="seatModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Informations Passager</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="modalCloseBtn"></button>
+      </div>
+      <div class="modal-body">
+        <p>Place sélectionnée : <strong id="modalSeatLabel"></strong></p>
+        <p>Type de place : <span id="modalSeatType" class="badge"></span></p>
+        <p>Tarif de base : <strong id="modalBasePrix"></strong></p>
+        <hr>
+        <div class="mb-3">
+          <label for="modalPassagerCategorie" class="form-label">Catégorie du passager</label>
+          <select class="form-select" id="modalPassagerCategorie">
+            <option value="ADULTE" data-reduction="0">Adulte (tarif plein)</option>
+            <option value="ENFANT" data-reduction="50">Enfant (-50% sur STANDARD)</option>
+            <option value="SENIOR" data-reduction="20">Senior (-20%)</option>
+            <option value="JEUNE" data-reduction="10">Jeune (-10%)</option>
+            <option value="ETUDIANT" data-reduction="15">Étudiant (-15%)</option>
+          </select>
+        </div>
+        <div class="alert alert-info" id="modalPrixInfo">
+          <strong>Tarif appliqué :</strong> <span id="modalFinalPrix"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modalCancel">Annuler</button>
+        <button type="button" class="btn btn-primary" id="modalConfirm">Valider</button>
+      </div>
+    </div>
+  </div>
 </div>
 </body>
 </html>

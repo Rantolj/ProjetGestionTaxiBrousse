@@ -92,9 +92,9 @@ INSERT INTO categories_tb (nom) VALUES
 
 -- 8. Taxi-brousses
 INSERT INTO taxi_brousses (immatriculation, categorie_id, nbr_places, charge_max, consommation, disposition_places) VALUES
-('1234-TAB', 1, 25, 3500.00, 8.5, 'xxoo/oooo/ooxo/ooxo/ooxo/ooxo/ooxo/oooo'),
-('5678-TAB', 2, 16, 2800.00, 7.2, 'xxoo/oooo/ooxo/ooxo/oooo'),
-('9012-TAB', 1, 28, 4200.00, 9.0, 'xxoo/oooo/ooxo/ooxo/ooxo/ooxo/ooxo/ooxo/oooo');
+('1234-TAB', 1, 25, 3500.00, 8.5, 'xxVV/VVVV/PPPP/SSSS/SSSS'),
+('5678-TAB', 2, 16, 2800.00, 7.2, 'xxVV/PPPP/SSxS/SSxS/PPPP'),
+('9012-TAB', 1, 28, 4200.00, 9.0, 'xxVV/PPPP/PPxP/PPxP/SSxS/SSxS/SSxS/SSxS/SSSS');
 
 -- 9. Frais (tarifs par trajet et catégorie)
 INSERT INTO frais (trajet_id, categorie_id, montant, date_effective) VALUES

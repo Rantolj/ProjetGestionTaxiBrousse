@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "trajets")
 @Getter
@@ -19,4 +22,7 @@ public class Trajet {
     private String nom;
 
     private Double distance;
+
+    @OneToMany(mappedBy = "trajet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TarifPlace> tarifsPlaces = new ArrayList<>();
 }

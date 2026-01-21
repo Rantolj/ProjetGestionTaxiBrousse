@@ -1,5 +1,5 @@
--- CREATE DATABASE taxibrousse
--- \c taxibrousse
+CREATE DATABASE taxibrousse
+\c taxibrousse
 
 CREATE TABLE IF NOT EXISTS personnes
 (
@@ -68,6 +68,24 @@ CREATE TABLE IF NOT EXISTS taxi_brousses
     disposition_places VARCHAR(255)  NOT NULL            -- xxoo/oooo/ooxo/ooxo/ooxo/oooo
 );
 
+CREATE TABLE IF NOT EXISTS categories_places
+(
+    id  SERIAL PRIMARY KEY,
+    taxi_brousse_id INTEGER REFERENCES taxi_brousses (id),
+    type VARCHAR(50) NOT NULL, -- 'STANDARD', 'PREMIUM'
+    nbr_places_type INTEGER NOT NULL,
+    prix_par_type DECIMAL(15,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tarifs_places
+(
+    id             SERIAL PRIMARY KEY,
+    trajet_id      INTEGER REFERENCES trajets (id),
+    type_place     VARCHAR(50) NOT NULL, -- 'STANDARD', 'PREMIUM'
+    montant        DECIMAL(15, 2) NOT NULL,
+    date_effective DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
 CREATE TABLE IF NOT EXISTS frais
 (
     id             SERIAL PRIMARY KEY,
@@ -99,7 +117,12 @@ CREATE TABLE IF NOT EXISTS details_reservations
 (
     id             SERIAL PRIMARY KEY,
     reservation_id INTEGER REFERENCES reservations (id),
-    numero_place   VARCHAR(10) NOT NULL
+    numero_place   VARCHAR(10) NOT NULL,
+    personne_id    INTEGER REFERENCES personnes (id),
+    type_place     VARCHAR(50),
+    is_enfant      BOOLEAN NOT NULL DEFAULT FALSE,--nouv 16/01/2026
+    passager_categorie VARCHAR(50) NOT NULL DEFAULT 'ADULTE', -- ADULTE, ENFANT, JEUNE, SENIOR, ETUDIANT
+    prix_unitaire  DECIMAL(15, 2) -- prix calculé avec réduction selon catégorie
 );
 
 CREATE TABLE IF NOT EXISTS paiements
@@ -116,5 +139,19 @@ CREATE TABLE IF NOT EXISTS configurations
     cle    VARCHAR(100) NOT NULL,
     valeur VARCHAR(255) NOT NULL
 );
+
+
+-- MIGRATION: add `passager_categorie` to existing databases and backfill from `is_enfant`.
+-- Run these statements once against your existing database (psql or migration tool):
+-- Add column if not exists (keeps default for new rows)
+ALTER TABLE details_reservations ADD COLUMN IF NOT EXISTS passager_categorie VARCHAR(50) DEFAULT 'ADULTE';
+-- Backfill based on existing flag
+UPDATE details_reservations SET passager_categorie = 'ENFANT' WHERE is_enfant = TRUE;
+UPDATE details_reservations SET passager_categorie = 'ADULTE' WHERE passager_categorie IS NULL;
+-- Make column NOT NULL to enforce presence
+ALTER TABLE details_reservations ALTER COLUMN passager_categorie SET NOT NULL;
+-- Add prix_unitaire column for audit trail
+ALTER TABLE details_reservations ADD COLUMN IF NOT EXISTS prix_unitaire DECIMAL(15, 2);
+-- Note: after verification you may remove `is_enfant` column in a later migration.
 
 

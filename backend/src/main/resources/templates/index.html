@@ -5,10 +5,62 @@
       lang="fr">
 <head>
     <title>Tableau de bord</title>
+    <style>
+        .hero-banner {
+            background:url('/images/dashboard-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-banner h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero-banner p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
         <div class="container-fluid">
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <h1>Bienvenue à la Gestion Taxi-Brousse</h1>
+                    <p>Gérez vos voyages, réservations et paiements en toute facilité</p>
+                </div>
+            </div>
+
             <!-- Statistics Cards -->
             <div class="row g-3 mb-4">
                 <div class="col-md-6 col-lg-3">

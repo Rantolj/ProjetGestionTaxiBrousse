@@ -12,6 +12,11 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Créer/modifier Taxi-brousse</h5>
+
+                    <div th:if="${errorMessage != null}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                    <div th:if="${warningMessage != null}" class="alert alert-warning" th:text="${warningMessage}"></div>
+                    <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}"></div>
+
                     <form th:action="@{/taxibrousses/save}" th:object="${taxi}" method="post">
                         <div class="mb-3">
                             <label for="immatriculation" class="form-label">Immatriculation</label>
@@ -19,17 +24,256 @@
                         </div>
                         <div class="mb-3">
                             <label for="nbrPlaces" class="form-label">Nombre de places</label>
-                            <input type="number" class="form-control" id="nbrPlaces" th:field="*{nbrPlaces}"/>
+                            <input type="number" class="form-control" id="nbrPlaces" th:field="*{nbrPlaces}" readonly/>
                         </div>
+
+                        <div class="mb-3 row">
+                            <div class="col-md-6">
+                                <label for="chargeMax" class="form-label">Charge max (kg)</label>
+                                <input type="number" step="0.01" class="form-control" id="chargeMax" th:field="*{chargeMax}" required/>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="consommation" class="form-label">Consommation (L/100km)</label>
+                                <input type="number" step="0.01" class="form-control" id="consommation" th:field="*{consommation}" required/>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="disposition" class="form-label">Disposition de place</label>
                             <input type="text" class="form-control" id="disposition" th:field="*{dispositionPlaces}"/>
+                            <small class="text-muted">Editez la disposition ci-dessous en cliquant sur les cases (x = couloir, S = Standard, P = Premium, V = VIP). Les lignes sont séparées par '/'.</small>
                         </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" id="initGridBtn" class="btn btn-sm btn-outline-primary">Initialiser (4x3)</button>
+                                <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary">Ajouter une ligne</button>
+                                <button type="button" id="addColBtn" class="btn btn-sm btn-outline-secondary">Ajouter une colonne</button>
+                                <button type="button" id="clearBtn" class="btn btn-sm btn-outline-danger">Réinitialiser</button>
+                                <div class="ms-auto text-muted align-self-center">Disposition vide ? Cliquez sur <strong>Initialiser</strong></div>
+                            </div>
+
+                            <div id="seatEditor" class="p-2 bg-light border rounded" style="min-height:120px;"></div>
+                            <div class="mt-2">
+                                <small class="text-muted">Légende : <span style="display:inline-block;width:12px;height:12px;background:#6f42c1;margin-right:6px;border-radius:3px;"></span>VIP &nbsp; <span style="display:inline-block;width:12px;height:12px;background:#ffd700;margin-right:6px;border-radius:3px;"></span>Premium &nbsp; <span style="display:inline-block;width:12px;height:12px;background:#28a745;margin-right:6px;border-radius:3px;"></span>Standard &nbsp; <span style="display:inline-block;width:12px;height:12px;background:#ccc;margin-right:6px;border-radius:3px;border:1px solid #999;"></span>Couloir</small>
+                            </div>
+                            <div class="mt-2">
+                                <small><strong>Preview disposition :</strong> <span id="dispositionPreview" class="text-monospace"></span></small>
+                            </div>
+                        </div>
+
                         <div>
                             <button type="submit" class="btn btn-primary">Enregistrer</button>
                             <a href="/taxibrousses" class="btn btn-secondary">Annuler</a>
                         </div>
                     </form>
+
+                    <style>
+                        .seat-cell { width:44px; height:36px; display:inline-flex; align-items:center; justify-content:center; margin:3px; border-radius:6px; cursor:pointer; font-weight:700; flex-direction:column; }
+                        .seat-cell .seat-label { font-size:0.70rem; line-height:1; }
+                        .seat-cell .seat-type { font-size:0.60rem; opacity:0.95; }
+                        .seat-vip { background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%); color:#fff; border:1px solid #5a33a2; }
+                        .seat-premium { background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%); color:#000; border:1px solid #e6a800; }
+                        .seat-standard { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color:#fff; border:1px solid #1e7e34; }
+                        .seat-walkway { background:#ccc; border:1px solid #999; color:#333; }
+                    </style>
+
+                    <script th:inline="javascript">
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const dispositionInput = document.getElementById('disposition');
+                            const editor = document.getElementById('seatEditor');
+                            const preview = document.getElementById('dispositionPreview');
+                            const nbrPlacesInput = document.getElementById('nbrPlaces');
+                            const initBtn = document.getElementById('initGridBtn');
+                            const addRowBtn = document.getElementById('addRowBtn');
+                            const addColBtn = document.getElementById('addColBtn');
+                            const clearBtn = document.getElementById('clearBtn');
+
+                            function parseDisposition(str) {
+                                if (!str || !str.trim()) return [];
+                                return str.split('/');
+                            }
+
+                            function render() {
+                                editor.innerHTML = '';
+                                const rows = parseDisposition(dispositionInput.value);
+                                if (rows.length === 0) {
+                                    const placeholder = document.createElement('div');
+                                    placeholder.classList.add('text-center','text-muted','py-4');
+                                    placeholder.innerHTML = '<div>Aucune disposition définie.<br/>Cliquez sur <strong>Initialiser</strong> ou <strong>Ajouter une ligne</strong> pour commencer.</div>';
+                                    editor.appendChild(placeholder);
+                                    preview.textContent = '';
+                                    nbrPlacesInput.value = 0;
+                                    return;
+                                }
+
+                                let seatCount = 0;
+                                rows.forEach((row, rIdx) => {
+                                    const rowDiv = document.createElement('div');
+                                    rowDiv.classList.add('d-flex','justify-content-center','mb-1');
+                                    let seatIndexInRow = 0;
+                                    const rowLetter = String.fromCharCode(65 + rIdx);
+                                    for (let i = 0; i < row.length; i++) {
+                                        const raw = row.charAt(i);
+                                        const c = raw ? raw.toUpperCase() : 'X';
+                                        const btn = document.createElement('div');
+                                        btn.classList.add('seat-cell');
+                                        btn.dataset.row = rIdx;
+                                        btn.dataset.index = i;
+                                        btn.dataset.char = c && c !== 'X' ? c : 'X';
+
+                                        if (c === 'P' || c === 'S' || c === 'V' || c === 'O') {
+                                            seatIndexInRow++;
+                                            const label = rowLetter + seatIndexInRow;
+                                            btn.dataset.label = label;
+                                            seatCount++;
+                                            if (c === 'P') {
+                                                btn.classList.add('seat-premium');
+                                                btn.innerHTML = '<div class="seat-label">' + label + '</div><div class="seat-type">P</div>';
+                                            } else if (c === 'S' || c === 'O') {
+                                                btn.classList.add('seat-standard');
+                                                btn.innerHTML = '<div class="seat-label">' + label + '</div><div class="seat-type">S</div>';
+                                            } else if (c === 'V') {
+                                                btn.classList.add('seat-vip');
+                                                btn.innerHTML = '<div class="seat-label">' + label + '</div><div class="seat-type">V</div>';
+                                            }
+                                        } else {
+                                            btn.classList.add('seat-walkway');
+                                            btn.dataset.label = '';
+                                            btn.innerHTML = '';
+                                        }
+
+                                        btn.addEventListener('click', () => {
+                                            // cycle: X -> S -> P -> V -> X
+                                            const order = ['X','S','P','V'];
+                                            let cur = btn.dataset.char || 'X';
+                                            let idx = order.indexOf(cur);
+                                            idx = (idx + 1) % order.length;
+                                            const next = order[idx];
+                                            btn.dataset.char = next;
+
+                                            if (next === 'P') {
+                                                btn.className = 'seat-cell seat-premium';
+                                                // ensure label exists
+                                                if (!btn.dataset.label) {
+                                                    // compute label from position
+                                                    const r = parseInt(btn.dataset.row, 10);
+                                                    const rowLetterLocal = String.fromCharCode(65 + r);
+                                                    // compute index by counting previous seat cells in row
+                                                    const cells = Array.from(btn.parentElement.querySelectorAll('.seat-cell'));
+                                                    let seatIdx = 0;
+                                                    for (const cEl of cells) {
+                                                        if (cEl === btn) break;
+                                                        if (cEl.dataset.char && cEl.dataset.char !== 'X') seatIdx++;
+                                                    }
+                                                    btn.dataset.label = rowLetterLocal + (seatIdx + 1);
+                                                }
+                                                btn.innerHTML = '<div class="seat-label">' + btn.dataset.label + '</div><div class="seat-type">P</div>';
+                                            } else if (next === 'S') {
+                                                btn.className = 'seat-cell seat-standard';
+                                                if (!btn.dataset.label) {
+                                                    const r = parseInt(btn.dataset.row, 10);
+                                                    const rowLetterLocal = String.fromCharCode(65 + r);
+                                                    const cells = Array.from(btn.parentElement.querySelectorAll('.seat-cell'));
+                                                    let seatIdx = 0;
+                                                    for (const cEl of cells) {
+                                                        if (cEl === btn) break;
+                                                        if (cEl.dataset.char && cEl.dataset.char !== 'X') seatIdx++;
+                                                    }
+                                                    btn.dataset.label = rowLetterLocal + (seatIdx + 1);
+                                                }
+                                                btn.innerHTML = '<div class="seat-label">' + btn.dataset.label + '</div><div class="seat-type">S</div>';
+                                            } else if (next === 'V') {
+                                                btn.className = 'seat-cell seat-vip';
+                                                if (!btn.dataset.label) {
+                                                    const r = parseInt(btn.dataset.row, 10);
+                                                    const rowLetterLocal = String.fromCharCode(65 + r);
+                                                    const cells = Array.from(btn.parentElement.querySelectorAll('.seat-cell'));
+                                                    let seatIdx = 0;
+                                                    for (const cEl of cells) {
+                                                        if (cEl === btn) break;
+                                                        if (cEl.dataset.char && cEl.dataset.char !== 'X') seatIdx++;
+                                                    }
+                                                    btn.dataset.label = rowLetterLocal + (seatIdx + 1);
+                                                }
+                                                btn.innerHTML = '<div class="seat-label">' + btn.dataset.label + '</div><div class="seat-type">V</div>';
+                                            } else {
+                                                btn.className = 'seat-cell seat-walkway';
+                                                btn.dataset.label = '';
+                                                btn.innerHTML = '';
+                                            }
+                                            rebuildDispositionFromEditor();
+                                        });
+
+                                        rowDiv.appendChild(btn);
+                                    }
+                                    editor.appendChild(rowDiv);
+                                });
+                                nbrPlacesInput.value = seatCount;
+                                preview.textContent = dispositionInput.value || '';
+                            }
+
+                            function rebuildDispositionFromEditor() {
+                                const rows = editor.querySelectorAll('div.d-flex');
+                                const newRows = [];
+                                let seatCount = 0;
+                                rows.forEach(rDiv => {
+                                    const cells = Array.from(rDiv.querySelectorAll('.seat-cell'));
+                                    const chars = cells.map(c => c.dataset.char ? c.dataset.char : 'X');
+                                    chars.forEach(ch => { if (ch !== 'X') seatCount++; });
+                                    newRows.push(chars.join(''));
+                                });
+                                const disp = newRows.join('/');
+                                dispositionInput.value = disp;
+                                preview.textContent = disp;
+                                nbrPlacesInput.value = seatCount;
+                            }
+
+                            function initGrid(r = 3, c = 4) {
+                                const rows = [];
+                                for (let i = 0; i < r; i++) {
+                                    rows.push('S'.repeat(c));
+                                }
+                                dispositionInput.value = rows.join('/');
+                                render();
+                            }
+
+                            function addRow() {
+                                const rows = parseDisposition(dispositionInput.value);
+                                if (rows.length === 0) rows.push('S'.repeat(4));
+                                else {
+                                    const cols = rows[0].length || 4;
+                                    rows.push('X'.repeat(cols));
+                                }
+                                dispositionInput.value = rows.join('/');
+                                render();
+                            }
+
+                            function addColumn() {
+                                const rows = parseDisposition(dispositionInput.value);
+                                if (rows.length === 0) return addRow();
+                                for (let i = 0; i < rows.length; i++) {
+                                    rows[i] = rows[i] + 'X';
+                                }
+                                dispositionInput.value = rows.join('/');
+                                render();
+                            }
+
+                            function clearGrid() {
+                                dispositionInput.value = '';
+                                render();
+                            }
+
+                            dispositionInput.addEventListener('change', render);
+                            initBtn.addEventListener('click', () => initGrid(3,4));
+                            addRowBtn.addEventListener('click', addRow);
+                            addColBtn.addEventListener('click', addColumn);
+                            clearBtn.addEventListener('click', clearGrid);
+
+                            // initial render
+                            render();
+                        });
+                    </script>
                 </div>
             </div>
         </div>
