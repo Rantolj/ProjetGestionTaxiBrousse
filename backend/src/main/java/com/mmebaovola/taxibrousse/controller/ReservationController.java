@@ -139,7 +139,20 @@ public class ReservationController {
             if (selectedVoyage.getTrajet() != null) {
                 List<TarifPlace> tarifs = tarifPlaceRepository.findByTrajetId(selectedVoyage.getTrajet().getId());
                 for (TarifPlace tp : tarifs) {
-                    tarifsByType.put(tp.getTypePlace(), tp.getMontant());
+                    String key = tp.getTypePlace() != null ? tp.getTypePlace().trim().toUpperCase() : null;
+                    if (key != null && !key.isBlank()) {
+                        tarifsByType.put(key, tp.getMontant());
+                    }
+                }
+            }
+
+            // Fallback: if no trajet tariffs configured, use taxi's category prices
+            if (tarifsByType.isEmpty() && categoriesPlaces != null) {
+                for (CategoriePlace cp : categoriesPlaces) {
+                    String key = cp.getType() != null ? cp.getType().trim().toUpperCase() : null;
+                    if (key != null && !key.isBlank() && cp.getPrixParType() != null) {
+                        tarifsByType.put(key, cp.getPrixParType());
+                    }
                 }
             }
 
@@ -226,7 +239,21 @@ public class ReservationController {
             List<TarifPlace> tps = tarifPlaceRepository.findCurrentTarifsByTrajet(voyage.getTrajet().getId(),
                     voyage.getDateDepart().toLocalDate());
             for (TarifPlace t : tps) {
-                tarifsByType.put(t.getTypePlace(), t.getMontant());
+                String key = t.getTypePlace() != null ? t.getTypePlace().trim().toUpperCase() : null;
+                if (key != null && !key.isBlank()) {
+                    tarifsByType.put(key, t.getMontant());
+                }
+            }
+        }
+
+        // Fallback: if no trajet tariffs configured, use taxi's category prices
+        if (tarifsByType.isEmpty() && voyage != null && voyage.getTaxiBrousse() != null) {
+            List<CategoriePlace> cps = categoriePlaceRepository.findByTaxiBrousseId(voyage.getTaxiBrousse().getId());
+            for (CategoriePlace cp : cps) {
+                String key = cp.getType() != null ? cp.getType().trim().toUpperCase() : null;
+                if (key != null && !key.isBlank() && cp.getPrixParType() != null) {
+                    tarifsByType.put(key, cp.getPrixParType());
+                }
             }
         }
 
@@ -260,6 +287,10 @@ public class ReservationController {
         BigDecimal montantTotal = BigDecimal.ZERO;
         final BigDecimal enfantStandardPrix = BigDecimal.valueOf(50000);
 
+        // Map pour stocker le prix calculé par place (pour le réutiliser lors de la
+        // sauvegarde des détails)
+        Map<String, BigDecimal> prixParPlace = new HashMap<>();
+
         if (seatNumbers != null && !seatNumbers.isEmpty()) {
             for (String seat : seatNumbers) {
                 if (seat == null || seat.trim().isEmpty())
@@ -271,6 +302,7 @@ public class ReservationController {
 
                 // Calculer le prix avec réduction selon la catégorie
                 BigDecimal prix = calculatePrixWithReduction(basePrix, type, categorie, enfantStandardPrix);
+                prixParPlace.put(label, prix);
                 montantTotal = montantTotal.add(prix);
             }
         }
@@ -278,11 +310,34 @@ public class ReservationController {
         reservation.setMontantTotal(montantTotal.doubleValue());
         reservationRepository.save(reservation);
 
+        // Vérifier les places déjà réservées pour ce voyage
+        Set<String> alreadyReserved = new HashSet<>();
+        if (voyage != null) {
+            List<DetailsReservation> existingDetails = detailsReservationRepository
+                    .findByReservation_Voyage_Id(voyage.getId());
+            for (DetailsReservation d : existingDetails) {
+                if (d.getNumeroPlace() != null) {
+                    alreadyReserved.add(d.getNumeroPlace());
+                }
+            }
+        }
+
         int placesReservees = 0;
+        StringBuilder placesIgnorees = new StringBuilder();
+
         if (seatNumbers != null && !seatNumbers.isEmpty()) {
             for (String seat : seatNumbers) {
                 if (seat != null && !seat.trim().isEmpty()) {
                     String label = seat.trim();
+
+                    // Vérifier si la place n'est pas déjà réservée
+                    if (alreadyReserved.contains(label)) {
+                        if (placesIgnorees.length() > 0)
+                            placesIgnorees.append(", ");
+                        placesIgnorees.append(label);
+                        continue;
+                    }
+
                     DetailsReservation details = new DetailsReservation();
                     details.setReservation(reservation);
                     details.setNumeroPlace(label);
@@ -293,15 +348,19 @@ public class ReservationController {
                     details.setTypePlace(seatTypeMap.getOrDefault(label, "STANDARD"));
                     details.setIsEnfant(isEnf);
                     details.setPassagerCategorie(categorie);
+                    details.setPrixUnitaire(prixParPlace.getOrDefault(label, BigDecimal.ZERO));
                     detailsReservationRepository.save(details);
                     placesReservees++;
                 }
             }
         }
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s). Montant: " + montantTotal
-                        + " Ar");
+        String message = "Réservation enregistrée avec " + placesReservees + " place(s) réservée(s). Montant: "
+                + montantTotal + " Ar";
+        if (placesIgnorees.length() > 0) {
+            message += ". Attention: places déjà réservées ignorées: " + placesIgnorees;
+        }
+        redirectAttributes.addFlashAttribute("successMessage", message);
         return "redirect:/reservations";
     }
 
@@ -364,6 +423,17 @@ public class ReservationController {
         List<List<SeatView>> rows = new ArrayList<>();
         if (disposition == null || disposition.isEmpty()) {
             return rows;
+        }
+
+        // Ensure default prices if tarifsByType is missing entries
+        if (!tarifsByType.containsKey("VIP")) {
+            tarifsByType.put("VIP", new BigDecimal("180000"));
+        }
+        if (!tarifsByType.containsKey("PREMIUM")) {
+            tarifsByType.put("PREMIUM", new BigDecimal("140000"));
+        }
+        if (!tarifsByType.containsKey("STANDARD")) {
+            tarifsByType.put("STANDARD", new BigDecimal("80000"));
         }
 
         String[] rawRows = disposition.split("/");

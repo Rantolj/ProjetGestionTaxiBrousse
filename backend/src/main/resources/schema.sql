@@ -121,7 +121,8 @@ CREATE TABLE IF NOT EXISTS details_reservations
     personne_id    INTEGER REFERENCES personnes (id),
     type_place     VARCHAR(50),
     is_enfant      BOOLEAN NOT NULL DEFAULT FALSE,--nouv 16/01/2026
-    passager_categorie VARCHAR(50) NOT NULL DEFAULT 'ADULTE' -- ADULTE, ENFANT, JEUNE, SENIOR, ETUDIANT
+    passager_categorie VARCHAR(50) NOT NULL DEFAULT 'ADULTE', -- ADULTE, ENFANT, JEUNE, SENIOR, ETUDIANT
+    prix_unitaire  DECIMAL(15, 2) -- prix calculé avec réduction selon catégorie
 );
 
 CREATE TABLE IF NOT EXISTS paiements
@@ -149,6 +150,8 @@ UPDATE details_reservations SET passager_categorie = 'ENFANT' WHERE is_enfant = 
 UPDATE details_reservations SET passager_categorie = 'ADULTE' WHERE passager_categorie IS NULL;
 -- Make column NOT NULL to enforce presence
 ALTER TABLE details_reservations ALTER COLUMN passager_categorie SET NOT NULL;
+-- Add prix_unitaire column for audit trail
+ALTER TABLE details_reservations ADD COLUMN IF NOT EXISTS prix_unitaire DECIMAL(15, 2);
 -- Note: after verification you may remove `is_enfant` column in a later migration.
 
 

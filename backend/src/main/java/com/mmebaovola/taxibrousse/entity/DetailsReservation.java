@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "details_reservations")
@@ -34,5 +35,8 @@ public class DetailsReservation {
     @Enumerated(EnumType.STRING)
     @Column(name = "passager_categorie", nullable = false)
     private PassengerCategory passagerCategorie = PassengerCategory.ADULTE;
+
+    @Column(name = "prix_unitaire", precision = 15, scale = 2)
+    private BigDecimal prixUnitaire;
 
 }
