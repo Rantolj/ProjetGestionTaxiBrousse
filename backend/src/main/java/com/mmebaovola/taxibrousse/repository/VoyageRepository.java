@@ -17,24 +17,24 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
 
     /**
      * Calcule le CA max potentiel pour un voyage donné
-     * Formule: SUM(nbr_places_type * prix tarif du trajet pour ce type)
+     * Formule: SUM(nbr_places_type * prix)
      * 
-     * Jointure: voyage → taxi_brousse → categories_places (nbr places par type)
-     * voyage → trajet → tarifs_places (prix par type)
+     * Le prix est pris de tarifs_places si configuré, sinon de
+     * categories_places.prix_par_type
+     * Version SIMPLIFIÉE avec LEFT JOIN pour robustesse
      */
     @Query(value = """
-            SELECT COALESCE(SUM(cp.nbr_places_type * tp.montant), 0)
+            SELECT COALESCE(SUM(
+                cp.nbr_places_type * COALESCE(tp.montant, cp.prix_par_type)
+            ), 0)
             FROM voyages v
-            JOIN categories_places cp ON cp.taxi_brousse_id = v.taxi_brousse_id
-            JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id AND tp.type_place = cp.type
+            INNER JOIN categories_places cp ON cp.taxi_brousse_id = v.taxi_brousse_id
+            LEFT JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id
+                AND (UPPER(TRIM(tp.type_place)) = UPPER(TRIM(cp.type))
+                     OR tp.type_place = cp.type)
+                AND tp.date_effective <= CAST(v.date_depart AS DATE)
             WHERE v.id = :voyageId
-            AND tp.date_effective = (
-                SELECT MAX(tp2.date_effective)
-                FROM tarifs_places tp2
-                WHERE tp2.trajet_id = v.trajet_id
-                AND tp2.type_place = tp.type_place
-                AND tp2.date_effective <= CAST(v.date_depart AS DATE)
-            )
+            GROUP BY v.id
             """, nativeQuery = true)
     BigDecimal calculateCAMaxByVoyage(@Param("voyageId") Long voyageId);
 
@@ -64,17 +64,13 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
                 t.nom AS trajetNom,
                 v.date_depart AS dateDepart,
                 COALESCE((
-                    SELECT SUM(cp.nbr_places_type * tp.montant)
+                    SELECT SUM(cp.nbr_places_type * COALESCE(tp.montant, cp.prix_par_type))
                     FROM categories_places cp
-                    JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id AND tp.type_place = cp.type
+                    LEFT JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id
+                        AND (UPPER(TRIM(tp.type_place)) = UPPER(TRIM(cp.type)) OR tp.type_place = cp.type)
+                        AND tp.date_effective <= CAST(v.date_depart AS DATE)
                     WHERE cp.taxi_brousse_id = v.taxi_brousse_id
-                    AND tp.date_effective = (
-                        SELECT MAX(tp2.date_effective)
-                        FROM tarifs_places tp2
-                        WHERE tp2.trajet_id = v.trajet_id
-                        AND tp2.type_place = tp.type_place
-                        AND tp2.date_effective <= CAST(v.date_depart AS DATE)
-                    )
+                    GROUP BY v.id, v.taxi_brousse_id
                 ), 0) AS caMax,
                 COALESCE((
                     SELECT SUM(r.montant_total)
@@ -83,32 +79,24 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
                 ), 0) AS caReel,
                 CASE
                     WHEN COALESCE((
-                        SELECT SUM(cp.nbr_places_type * tp.montant)
+                        SELECT SUM(cp.nbr_places_type * COALESCE(tp.montant, cp.prix_par_type))
                         FROM categories_places cp
-                        JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id AND tp.type_place = cp.type
+                        LEFT JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id
+                            AND (UPPER(TRIM(tp.type_place)) = UPPER(TRIM(cp.type)) OR tp.type_place = cp.type)
+                            AND tp.date_effective <= CAST(v.date_depart AS DATE)
                         WHERE cp.taxi_brousse_id = v.taxi_brousse_id
-                        AND tp.date_effective = (
-                            SELECT MAX(tp2.date_effective)
-                            FROM tarifs_places tp2
-                            WHERE tp2.trajet_id = v.trajet_id
-                            AND tp2.type_place = tp.type_place
-                            AND tp2.date_effective <= CAST(v.date_depart AS DATE)
-                        )
+                        GROUP BY v.id, v.taxi_brousse_id
                     ), 0) > 0
                     THEN CAST(
                         COALESCE((SELECT SUM(r.montant_total) FROM reservations r WHERE r.voyage_id = v.id), 0) * 100
                         / COALESCE((
-                            SELECT SUM(cp.nbr_places_type * tp.montant)
+                            SELECT SUM(cp.nbr_places_type * COALESCE(tp.montant, cp.prix_par_type))
                             FROM categories_places cp
-                            JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id AND tp.type_place = cp.type
+                            LEFT JOIN tarifs_places tp ON tp.trajet_id = v.trajet_id
+                                AND (UPPER(TRIM(tp.type_place)) = UPPER(TRIM(cp.type)) OR tp.type_place = cp.type)
+                                AND tp.date_effective <= CAST(v.date_depart AS DATE)
                             WHERE cp.taxi_brousse_id = v.taxi_brousse_id
-                            AND tp.date_effective = (
-                                SELECT MAX(tp2.date_effective)
-                                FROM tarifs_places tp2
-                                WHERE tp2.trajet_id = v.trajet_id
-                                AND tp2.type_place = tp.type_place
-                                AND tp2.date_effective <= CAST(v.date_depart AS DATE)
-                            )
+                            GROUP BY v.id, v.taxi_brousse_id
                         ), 1) AS INTEGER)
                     ELSE 0
                 END AS tauxRemplissage
