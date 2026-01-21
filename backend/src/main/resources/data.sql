@@ -117,8 +117,8 @@ INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_
 -- Taxi 2 (5678-TAB, 16 places): 2 VIP + 4 PREMIUM + 10 STANDARD
 INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type) VALUES
 (2, 'VIP', 2, 180000.00),
-(2, 'PREMIUM', 4, 160000.00),
-(2, 'STANDARD', 10, 100000.00);
+(2, 'PREMIUM', 4, 140000.00),
+(2, 'STANDARD', 10, 80000.00);
 
 -- Taxi 3 (9012-TAB, 28 places): 2 VIP + 4 PREMIUM + 22 STANDARD
 INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type) VALUES
