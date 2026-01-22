@@ -321,3 +321,27 @@ INSERT INTO configurations (cle, valeur) VALUES
 ('delai_annulation', '24h'),
 ('commission_reservation', '5'),
 ('tva', '20');
+
+-- 15. Annonceurs (publicités) et leurs diffusions
+-- Insérer annonceurs
+INSERT INTO annonceurs (nom) VALUES ('Vaniala'), ('Lewis');
+
+-- Diffusions: coût unitaire 100000 Ar
+INSERT INTO diffusions_publicitaires (annonceur_id, date_diffusion, nb_diffusions, prix_unitaire)
+VALUES
+  ((SELECT id FROM annonceurs WHERE nom='Vaniala' LIMIT 1), '2025-12-01', 20, 100000.00),
+  ((SELECT id FROM annonceurs WHERE nom='Lewis'  LIMIT 1), '2025-12-01', 10, 100000.00);
+
+
+-- CA total pour Déc 2025
+SELECT COALESCE(SUM(nb_diffusions * prix_unitaire),0) AS ca_total
+FROM diffusions_publicitaires
+WHERE date_diffusion >= '2025-12-01' AND date_diffusion < '2026-01-01';
+
+
+SELECT a.nom AS annonceur,
+       SUM(dp.nb_diffusions * dp.prix_unitaire) AS ca
+FROM diffusions_publicitaires dp
+JOIN annonceurs a ON a.id = dp.annonceur_id
+WHERE dp.date_diffusion >= '2025-12-01' AND dp.date_diffusion < '2026-01-01'
+GROUP BY a.nom;
