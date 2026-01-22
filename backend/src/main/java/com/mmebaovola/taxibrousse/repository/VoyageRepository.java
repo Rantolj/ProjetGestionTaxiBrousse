@@ -73,7 +73,7 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
                     GROUP BY v.id, v.taxi_brousse_id
                 ), 0) AS caMax,
                 COALESCE((
-                    SELECT SUM(r.montant_total)
+                    SELECT SUM(r.montant_total) 
                     FROM reservations r
                     WHERE r.voyage_id = v.id
                 ), 0) AS caReel,
