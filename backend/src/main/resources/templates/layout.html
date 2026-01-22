@@ -150,7 +150,13 @@
             <a href="/reports/turnover" class="nav-link" th:classappend="${currentPage == 'reports-turnover' ? 'active' : ''}">
                 <i class="bi bi-bar-chart-line"></i> Chiffre d'affaires
             </a>
-            <a href="/trajets" class="nav-link" th:classappend="${currentPage == 'trajets' ? 'active' : ''}">
+            <a href="/publicite/ca" class="nav-link" th:classappend="${currentPage == 'publicite-ca' ? 'active' : ''}">
+                <i class="bi bi-megaphone"></i> CA Publicité
+            </a>
+            <a href="/publicite/paiements" class="nav-link" th:classappend="${currentPage == 'publicite-paiements' ? 'active' : ''}">
+                <i class="bi bi-credit-card"></i> Paiements Annonceurs
+            </a>
+            <a href="/trajets" class="nav-link" th:classappend="${currentPage == 'trajets' ? 'active' : ''}">>
                 <i class="bi bi-signpost-2"></i> Trajets
             </a>
             <a href="/arrets" class="nav-link" th:classappend="${currentPage == 'arrets' ? 'active' : ''}">
