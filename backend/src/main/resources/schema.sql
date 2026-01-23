@@ -1,4 +1,4 @@
-CREATE DATABASE taxibrousse
+CREATE DATABASE taxibrousse;
 \c taxibrousse
 
 CREATE TABLE IF NOT EXISTS personnes
@@ -138,6 +138,43 @@ CREATE TABLE IF NOT EXISTS configurations
     id     SERIAL PRIMARY KEY,
     cle    VARCHAR(100) NOT NULL,
     valeur VARCHAR(255) NOT NULL
+);
+
+-- 1) annonceurs
+CREATE TABLE IF NOT EXISTS annonceurs (
+  id SERIAL PRIMARY KEY,
+  nom VARCHAR(200) NOT NULL,
+  contact VARCHAR(200),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2) diffusions_publicitaires (contrat/accord publicitaire avec un annonceur)
+CREATE TABLE IF NOT EXISTS diffusions_publicitaires (
+  id SERIAL PRIMARY KEY,
+  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),
+  prix_unitaire DECIMAL(15,2) NOT NULL,    -- prix par diffusion
+  note TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3) details_diffusion (diffusions effectives liées aux voyages)
+CREATE TABLE IF NOT EXISTS details_diffusion (
+  id SERIAL PRIMARY KEY,
+  diffusion_publicitaire_id INTEGER NOT NULL REFERENCES diffusions_publicitaires(id),
+  voyage_id INTEGER NOT NULL REFERENCES voyages(id),
+  nb_diffusions INTEGER NOT NULL DEFAULT 1,
+  montant_total DECIMAL(15,2) NOT NULL DEFAULT 0, -- calculé: nb_diffusions * prix_unitaire du contrat
+  date_diffusion DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table pour les paiements effectués par les annonceurs
+CREATE TABLE IF NOT EXISTS paiements_annonceurs (
+  id SERIAL PRIMARY KEY,
+  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),
+  montant_paye DECIMAL(15,2) NOT NULL,
+  date_paiement DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 

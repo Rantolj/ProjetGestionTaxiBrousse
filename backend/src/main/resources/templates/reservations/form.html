@@ -236,7 +236,18 @@
                         <small class="text-muted">Calculé automatiquement selon les places sélectionnées</small>
                     </div>
 
-                    
+                    <!-- Champ optionnel pour paiement initial -->
+                    <div class="mb-3">
+                        <label for="montantPaye" class="form-label">Montant payé (optionnel)</label>
+                        <input type="number" class="form-control" id="montantPaye" name="montantPaye" step="0.01" min="0" placeholder="0">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="payNow">
+                            <label class="form-check-label" for="payNow">Payer maintenant (copier le montant total)</label>
+                        </div>
+                        <div id="montantPayeError" class="form-text text-danger" style="display:none;"></div>
+                        <small class="text-muted">Si vous cochez "Payer maintenant", le montant sera copié automatiquement depuis le montant total.</small>
+                    </div>
+
                     <div class="mb-3">
                         <label for="dateReservation" class="form-label">Date et Heure de Réservation</label>
                            <input type="datetime-local" class="form-control" id="dateReservation" name="dateReservationStr"
@@ -361,11 +372,47 @@
                             const standardCountDisplay = document.getElementById('standardCount');
                             const totalAmountDisplay = document.getElementById('totalAmount');
                             const montantTotalInput = document.getElementById('montantTotal');
+                            const montantPayeInput = document.getElementById('montantPaye');
+                            const payNowCheckbox = document.getElementById('payNow');
+                            const montantPayeError = document.getElementById('montantPayeError');
+                            const submitBtn = document.querySelector('button[type="submit"]');
                             const voyageSelect = document.getElementById('voyage');
                             const dateReservationInput = document.getElementById('dateReservation');
 
-                            // modal elements (guarded: may be absent on some pages)
-                            const seatModalEl = document.getElementById('seatModal');
+                            function validateMontantPaye() {
+                                if (!montantPayeInput) return true;
+                                const raw = montantPayeInput.value;
+                                if (!raw || raw === '') {
+                                    // empty is allowed
+                                    if (montantPayeError) montantPayeError.style.display = 'none';
+                                    if (submitBtn) submitBtn.disabled = false;
+                                    return true;
+                                }
+                                const mp = parseFloat(raw) || 0;
+                                const total = parseFloat(montantTotalInput ? montantTotalInput.value : 0) || 0;
+                                if (mp < 0) {
+                                    if (montantPayeError) {
+                                        montantPayeError.textContent = 'Le montant payé ne peut pas être négatif.';
+                                        montantPayeError.style.display = 'block';
+                                    }
+                                    if (submitBtn) submitBtn.disabled = true;
+                                    return false;
+                                }
+                                if (mp > total) {
+                                    if (montantPayeError) {
+                                        montantPayeError.textContent = 'Le montant payé ne peut pas être supérieur au montant total.';
+                                        montantPayeError.style.display = 'block';
+                                    }
+                                    if (submitBtn) submitBtn.disabled = true;
+                                    return false;
+                                }
+                                if (montantPayeError) montantPayeError.style.display = 'none';
+                                if (submitBtn) submitBtn.disabled = false;
+                                return true;
+                            }
+
+                             // modal elements (guarded: may be absent on some pages)
+                             const seatModalEl = document.getElementById('seatModal');
                             let bsModal = null;
                             if (seatModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                                 bsModal = new bootstrap.Modal(seatModalEl, { backdrop: 'static', keyboard: false });
@@ -562,6 +609,12 @@
                                 standardCountDisplay.textContent = standardCount;
                                 totalAmountDisplay.textContent = formatNumber(totalAmount) + ' Ar';
                                 if (montantTotalInput) montantTotalInput.value = totalAmount;
+                                // si l'utilisateur a coché "Payer maintenant", synchroniser le montant payé
+                                if (montantPayeInput && payNowCheckbox && payNowCheckbox.checked) {
+                                    montantPayeInput.value = montantTotalInput.value || 0;
+                                }
+                                // Valider le montant payé (si présent)
+                                validateMontantPaye();
                             }
 
                             function updateDateMax() {
@@ -664,6 +717,27 @@
                             // Aussi annuler si on clique sur le bouton X de fermeture
                             if (modalCloseBtn) modalCloseBtn.addEventListener('click', cancelSelection);
                             if (voyageSelect) voyageSelect.addEventListener('change', updateDateMax);
+
+                            // gestion du checkbox "Payer maintenant" : copier le montant total
+                            if (payNowCheckbox && montantPayeInput && montantTotalInput) {
+                                payNowCheckbox.addEventListener('change', function() {
+                                    if (this.checked) {
+                                        montantPayeInput.value = montantTotalInput.value || 0;
+                                    } else {
+                                        montantPayeInput.value = '';
+                                    }
+                                    validateMontantPaye();
+                                });
+                            }
+
+                            // Validation en temps réel lorsque l'utilisateur modifie le montant payé
+                            if (montantPayeInput) {
+                                montantPayeInput.addEventListener('input', function() {
+                                    // si l'utilisateur modifie manuellement, désactiver le checkbox "Payer maintenant"
+                                    if (payNowCheckbox) payNowCheckbox.checked = false;
+                                    validateMontantPaye();
+                                });
+                            }
 
                             // Calcul initial
                             updateDisplay();

@@ -151,3 +151,36 @@ INSERT INTO configurations (cle, valeur) VALUES
 ('devise', 'MGA'),
 ('prix_litre_carburant', '5000'),
 ('delai_annulation', '24h');
+
+
+--22/01/26
+INSERT INTO societes_publicitaires (nom)
+SELECT 'Vaniala'
+    WHERE NOT EXISTS (SELECT 1 FROM societes_publicitaires WHERE nom = 'Vaniala');
+
+INSERT INTO societes_publicitaires (nom)
+SELECT 'Lewis'
+    WHERE NOT EXISTS (SELECT 1 FROM societes_publicitaires WHERE nom = 'Lewis');
+
+-- Insérer les diffusions pour décembre 2025 (tarif = 100000 Ar)
+INSERT INTO diffusions_publicitaires (societe_id, date_diffusion, nombre, tarif)
+VALUES
+    ((SELECT id FROM societes_publicitaires WHERE nom = 'Vaniala' LIMIT 1), '2025-12-15', 20, 100000.00),
+  ((SELECT id FROM societes_publicitaires WHERE nom = 'Lewis'  LIMIT 1), '2025-12-05', 10, 100000.00);
+
+
+-- CA par société pour décembre 2025
+SELECT s.nom,
+       SUM(d.nombre * d.tarif) AS ca_montant
+FROM diffusions_publicitaires d
+         JOIN societes_publicitaires s ON s.id = d.societe_id
+WHERE d.date_diffusion >= DATE '2025-12-01'
+  AND d.date_diffusion <  DATE '2026-01-01'
+GROUP BY s.nom;
+
+-- CA total pour décembre 2025
+SELECT SUM(d.nombre * d.tarif) AS ca_total_dec2025
+FROM diffusions_publicitaires d
+WHERE d.date_diffusion >= DATE '2025-12-01'
+  AND d.date_diffusion <  DATE '2026-01-01';
+

@@ -6,6 +6,7 @@ import com.mmebaovola.taxibrousse.entity.Voyage;
 import com.mmebaovola.taxibrousse.entity.CategoriePlace;
 import com.mmebaovola.taxibrousse.entity.TarifPlace;
 import com.mmebaovola.taxibrousse.entity.PassengerCategory; // added for passager categorie handling
+import com.mmebaovola.taxibrousse.entity.Paiement; // added paiement entity
 import com.mmebaovola.taxibrousse.repository.ClientRepository;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
@@ -14,6 +15,7 @@ import com.mmebaovola.taxibrousse.repository.ArretRepository;
 import com.mmebaovola.taxibrousse.repository.TrajetDetailRepository;
 import com.mmebaovola.taxibrousse.repository.CategoriePlaceRepository;
 import com.mmebaovola.taxibrousse.repository.TarifPlaceRepository;
+import com.mmebaovola.taxibrousse.repository.PaiementRepository; // added paiement repo
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,11 +47,13 @@ public class ReservationController {
     private final TrajetDetailRepository trajetDetailRepository;
     private final CategoriePlaceRepository categoriePlaceRepository;
     private final TarifPlaceRepository tarifPlaceRepository;
+    private final PaiementRepository paiementRepository; // ajout champ
 
     public ReservationController(ReservationRepository reservationRepository, VoyageRepository voyageRepository,
             ClientRepository clientRepository, DetailsReservationRepository detailsReservationRepository,
             ArretRepository arretRepository, TrajetDetailRepository trajetDetailRepository,
-            CategoriePlaceRepository categoriePlaceRepository, TarifPlaceRepository tarifPlaceRepository) {
+            CategoriePlaceRepository categoriePlaceRepository, TarifPlaceRepository tarifPlaceRepository,
+            PaiementRepository paiementRepository) {
         this.reservationRepository = reservationRepository;
         this.voyageRepository = voyageRepository;
         this.clientRepository = clientRepository;
@@ -58,6 +62,7 @@ public class ReservationController {
         this.trajetDetailRepository = trajetDetailRepository;
         this.categoriePlaceRepository = categoriePlaceRepository;
         this.tarifPlaceRepository = tarifPlaceRepository;
+        this.paiementRepository = paiementRepository; // assignation
     }
 
     @GetMapping
@@ -173,6 +178,7 @@ public class ReservationController {
             @RequestParam(name = "seatNumbers", required = false) List<String> seatNumbers,
             @RequestParam(name = "seatChildFlags", required = false) List<String> seatChildFlags,
             @RequestParam(name = "seatCategorieFlags", required = false) List<String> seatCategorieFlags,
+            @RequestParam(name = "montantPaye", required = false) Double montantPaye, // nouveau param
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
         if (dateReservationStr != null && !dateReservationStr.isBlank()) {
@@ -308,7 +314,26 @@ public class ReservationController {
         }
 
         reservation.setMontantTotal(montantTotal.doubleValue());
+
+        // Validation serveur : montantPaye (s'il est fourni) ne doit pas être négatif
+        // ni supérieur au montant total calculé.
+        if (montantPaye != null) {
+            BigDecimal mp = BigDecimal.valueOf(montantPaye);
+            if (mp.compareTo(BigDecimal.ZERO) < 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Le montant payé ne peut pas être négatif.");
+                return "redirect:/reservations/create" + (voyage != null && voyage.getId() != null ? "?voyageId=" + voyage.getId() : "");
+            }
+            if (mp.compareTo(montantTotal) > 0) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Le montant payé ne peut pas être supérieur au montant total (" + montantTotal + " Ar).");
+                return "redirect:/reservations/create" + (voyage != null && voyage.getId() != null ? "?voyageId=" + voyage.getId() : "");
+            }
+        }
+
         reservationRepository.save(reservation);
+
+        // If an initial payment amount was provided, create a Paiement record
+        // (le paiement, s'il est fourni, sera enregistré après la création des détails de réservation)
 
         // Vérifier les places déjà réservées pour ce voyage
         Set<String> alreadyReserved = new HashSet<>();
@@ -360,6 +385,24 @@ public class ReservationController {
         if (placesIgnorees.length() > 0) {
             message += ". Attention: places déjà réservées ignorées: " + placesIgnorees;
         }
+
+        // Enregistrer un paiement initial si demandé (après la création des détails)
+        if (montantPaye != null && montantPaye > 0) {
+            try {
+                Paiement p = new Paiement();
+                p.setReservation(reservation);
+                p.setMontantPaye(montantPaye);
+                p.setDatePaiement(LocalDateTime.now());
+                paiementRepository.save(p);
+                message += ". Paiement initial enregistré: " + montantPaye + " Ar";
+            } catch (Exception e) {
+                // Ne pas bloquer la réservation si l'enregistrement du paiement échoue
+                redirectAttributes.addFlashAttribute("warningMessage",
+                        "Réservation enregistrée mais échec lors de l'enregistrement du paiement : " + e.getMessage());
+                // continuer pour afficher la réservation
+            }
+        }
+
         redirectAttributes.addFlashAttribute("successMessage", message);
         return "redirect:/reservations";
     }

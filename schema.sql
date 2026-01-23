@@ -115,3 +115,38 @@ CREATE TABLE IF NOT EXISTS configurations
     cle    VARCHAR(100) NOT NULL,
     valeur VARCHAR(255) NOT NULL
 );
+
+--22/01/26
+-- Anciennes tables de publicité remplacées par la nouvelle structure demandée
+
+-- 1) annonceurs
+CREATE TABLE IF NOT EXISTS annonceurs (
+  id SERIAL PRIMARY KEY,
+  nom VARCHAR(200) NOT NULL,
+  contact VARCHAR(200),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2) diffusions_publicitaires
+CREATE TABLE IF NOT EXISTS diffusions_publicitaires (
+  id SERIAL PRIMARY KEY,
+  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),-- optionnel : si lié à un véhicule
+  voyage_id INTEGER REFERENCES voyages(id),             -- optionnel : si lié à un voyage
+  date_diffusion DATE NOT NULL,
+  nb_diffusions INTEGER NOT NULL DEFAULT 1,
+  prix_unitaire DECIMAL(15,2) NOT NULL,    -- par diffusion
+  montant_total DECIMAL(15,2) GENERATED ALWAYS AS (nb_diffusions * prix_unitaire) STORED,
+  note TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Fin du fichier
+CREATE TABLE IF NOT EXISTS paiements_annonceurs (
+  id SERIAL PRIMARY KEY,
+  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),
+  montant_paye DECIMAL(15,2) NOT NULL,
+  date_paiement DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+

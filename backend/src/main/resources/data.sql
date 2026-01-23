@@ -22,20 +22,7 @@ INSERT INTO clients (personne_id) VALUES
 INSERT INTO chauffeurs (personne_id) VALUES
 (6), (7), (8), (9), (10);
 
--- 4. Arrêts (avec indication si c'est une gare routière)
-INSERT INTO arrets (nom, est_gare) VALUES
-('Gare routière Fasankarana (Tana)', true),
-('Gare routière Majunga', true),
-('Gare routière Ambolomandinika Toamasina', true),
-('Gare routière Diego-Suarez', true),
-('Gare routière Fianarantsoa', true),
-('Gare routière Toliara', true),
-('Antsirabe', false),
-('Morondava', false),
-('Ambatondrazaka', false),
-('Sambava', false),
-('Moramanga', false),
-('Brickaville', false);
+
 
 -- 5. Trajets
 INSERT INTO trajets (nom, distance) VALUES
@@ -90,9 +77,7 @@ INSERT INTO trajet_details (trajet_id, arret_id, ordre) VALUES
 (7, 5, 2); -- Fianarantsoa
 
 -- 7. Catégories
-INSERT INTO categories_tb (nom) VALUES
-('Standard'),
-('VIP');
+
 
 -- 8. Taxi-brousses
 -- Disposition: V = VIP, P = PREMIUM, S = STANDARD, x = couloir/espace
@@ -117,8 +102,8 @@ INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_
 -- Taxi 2 (5678-TAB, 16 places): 2 VIP + 4 PREMIUM + 10 STANDARD
 INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type) VALUES
 (2, 'VIP', 2, 180000.00),
-(2, 'PREMIUM', 4, 160000.00),
-(2, 'STANDARD', 10, 100000.00);
+(2, 'PREMIUM', 4, 140000.00),
+(2, 'STANDARD', 10, 80000.00);
 
 -- Taxi 3 (9012-TAB, 28 places): 2 VIP + 4 PREMIUM + 22 STANDARD
 INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type) VALUES
@@ -173,151 +158,298 @@ INSERT INTO tarifs_places (trajet_id, type_place, montant, date_effective) VALUE
 INSERT INTO tarifs_places (trajet_id, type_place, montant, date_effective) VALUES
 (7, 'VIP', 180000.00, '2024-01-01'),
 (7, 'PREMIUM', 140000.00, '2024-01-01'),
-(7, 'STANDARD', 9000.00, '2024-01-01');
+(7, 'STANDARD', 90000.00, '2024-01-01');
 
--- 9. Frais (tarifs par trajet et catégorie)
-INSERT INTO frais (trajet_id, categorie_id, montant, date_effective) VALUES
-(1, 1, 25000.00, '2024-01-01'), -- Tana-Majunga Standard
-(1, 2, 35000.00, '2024-01-01'), -- Tana-Majunga VIP
-(2, 1, 15000.00, '2024-01-01'), -- Tana-Toamasina Standard
-(2, 2, 22000.00, '2024-01-01'), -- Tana-Toamasina VIP
-(3, 1, 45000.00, '2024-01-01'), -- Tana-Diego Standard
-(3, 2, 60000.00, '2024-01-01'), -- Tana-Diego VIP
-(4, 1, 20000.00, '2024-01-01'), -- Tana-Fianarantsoa Standard
-(4, 2, 28000.00, '2024-01-01'), -- Tana-Fianarantsoa VIP
-(5, 1, 40000.00, '2024-01-01'), -- Tana-Toliara Standard
-(5, 2, 55000.00, '2024-01-01'), -- Tana-Toliara VIP
-(6, 1, 30000.00, '2024-01-01'), -- Majunga-Diego Standard
-(6, 2, 42000.00, '2024-01-01'), -- Majunga-Diego VIP
-(7, 1, 25000.00, '2024-01-01'), -- Toamasina-Fianarantsoa Standard
-(7, 2, 35000.00, '2024-01-01'); -- Toamasina-Fianarantsoa VIP
 
--- 10. Voyages
--- Un meme voyage (trajet + date/heure) peut etre effectue par PLUSIEURS VOITURES
-INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart) VALUES
--- Voyage 1: Tana-Majunga aujourd'hui
-(1, 1, 1, '2026-01-15 08:00:00'), -- Taxi 1 (1234-TAB), Chauffeur 1, Tana-Majunga
 
--- VOYAGE DEMANDE: Fasankarana vers Ambolomandinika le 14 janvier a 14h
--- 3 voitures differentes font ce meme voyage a la meme heure
-(1, 2, 2, '2026-01-14 14:00:00'), -- Voyage 2: Voiture 1 (1234-TAB, 25 places) - Chauffeur 2
-(2, 3, 2, '2026-01-14 14:00:00'), -- Voyage 3: Voiture 2 (5678-TAB, 16 places) - Chauffeur 3
-(3, 4, 2, '2026-01-14 14:00:00'), -- Voyage 4: Voiture 3 (9012-TAB, 28 places) - Chauffeur 4
 
--- Autres voyages futurs
-(3, 3, 3, '2026-01-17 07:00:00'), -- Voyage 5: Taxi 3, Chauffeur 3, Tana-Diego
-(1, 4, 4, '2026-01-18 10:00:00'), -- Voyage 6: Taxi 1, Chauffeur 4, Tana-Fianarantsoa
-(2, 5, 5, '2026-01-19 06:00:00'), -- Voyage 7: Taxi 2, Chauffeur 5, Tana-Toliara
 
--- Voyages passés pour les statistiques de CA
-(1, 1, 2, '2026-01-05 06:00:00'), -- Voyage 8: Tana-Toamasina (passé)
-(2, 2, 1, '2026-01-07 08:00:00'), -- Voyage 9: Tana-Majunga (passé)
-(3, 3, 2, '2026-01-10 14:00:00'); -- Voyage 10: Tana-Toamasina (passé)
 
--- Voyage 11: même trajet/date pour la voiture demandée (Taxi 4)
-INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart) VALUES
-(4, 5, 2, '2026-01-14 14:00:00');
+-- 15. Annonceurs (publicités) et leurs diffusions
+-- Insérer annonceurs
+INSERT INTO annonceurs (nom) VALUES ('Vaniala'), ('Lewis');
+INSERT INTO annonceurs (nom) VALUES ('Socobis'), ('Jejoo');
 
--- 11. Reservations avec montants calculés selon les types de places
--- Les montants sont basés sur: VIP / PREMIUM / STANDARD du trajet
+-- Diffusions publicitaires (contrats): coût unitaire 100000 Ar
+INSERT INTO diffusions_publicitaires (annonceur_id, prix_unitaire, note)
+VALUES
+  ((SELECT id FROM annonceurs WHERE nom='Vaniala' LIMIT 1), 100000.00, 'Contrat janvier 2026'),
+  ((SELECT id FROM annonceurs WHERE nom='Lewis'  LIMIT 1), 100000.00, 'Contrat janvier 2026');
 
--- Voyage 1 (Tana-Majunga): 2 VIP + 1 PREMIUM = 2*180000 + 160000 = 520000 Ar
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(1, 1, 520000.00, '2026-01-10 14:00:00');
 
--- Voyage 2 (Tana-Toamasina, Taxi 1): 1 VIP + 2 PREMIUM = 180000 + 2*140000 = 460000 Ar
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(2, 2, 460000.00, '2026-01-11 15:00:00');
+INSERT INTO categories_tb (nom) VALUES
+('Standard'),
+('VIP');
 
--- Voyage 3 (Tana-Toamasina, Taxi 2): 2 VIP = 2*180000 = 360000 Ar
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(3, 3, 360000.00, '2026-01-12 10:00:00');
+-- 2) Taxi 1244-TBK (si absent)
+INSERT INTO taxi_brousses (immatriculation, categorie_id, nbr_places, charge_max, consommation, disposition_places)
+SELECT '1244-TBK', 1, 25, 3500.00, 8.5, 'xxVV/PPPP/SSxS/SSxS/SSSS'
+WHERE NOT EXISTS (SELECT 1 FROM taxi_brousses WHERE immatriculation = '1244-TBK');
 
--- Voyage 4 (Tana-Toamasina, Taxi 3): 3 PREMIUM = 3*140000 = 420000 Ar
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(4, 4, 420000.00, '2026-01-12 11:00:00');
+-- 2bis) Categories de places pour taxi 1244-TBK (prix STANDARD = 50,000 Ar)
+INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type)
+SELECT tb.id, 'VIP', 2, 180000.00
+FROM taxi_brousses tb
+WHERE tb.immatriculation = '1244-TBK'
+  AND NOT EXISTS (SELECT 1 FROM categories_places cp WHERE cp.taxi_brousse_id = tb.id AND cp.type = 'VIP');
 
--- Voyage 5 (Tana-Diego): 1 VIP + 1 STANDARD = 280000 + 150000 = 430000 Ar
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(5, 5, 430000.00, '2026-01-13 17:00:00');
+INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type)
+SELECT tb.id, 'PREMIUM', 4, 100000.00
+FROM taxi_brousses tb
+WHERE tb.immatriculation = '1244-TBK'
+  AND NOT EXISTS (SELECT 1 FROM categories_places cp WHERE cp.taxi_brousse_id = tb.id AND cp.type = 'PREMIUM');
 
--- Voyage 8 (passé Tana-Toamasina): plusieurs réservations pour statistiques
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(8, 1, 320000.00, '2026-01-03 10:00:00'), -- 1 VIP + 1 PREMIUM
-(8, 2, 280000.00, '2026-01-03 11:00:00'); -- 2 PREMIUM
+INSERT INTO categories_places (taxi_brousse_id, type, nbr_places_type, prix_par_type)
+SELECT tb.id, 'STANDARD', 19, 50000.00
+FROM taxi_brousses tb
+WHERE tb.immatriculation = '1244-TBK'
+  AND NOT EXISTS (SELECT 1 FROM categories_places cp WHERE cp.taxi_brousse_id = tb.id AND cp.type = 'STANDARD');
 
--- Voyage 9 (passé Tana-Majunga): réservations pour statistiques
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(9, 3, 360000.00, '2026-01-05 09:00:00'), -- 2 VIP
-(9, 4, 180000.00, '2026-01-05 10:00:00'); -- 2 STANDARD
+  -- 3) Voyages (three voyages requested)
+INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart)
+SELECT
+  (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1),
+  1, -- use chauffeur_id 1 (tu peux changer si nécessaire)
+  (SELECT id FROM trajets WHERE nom = 'TNR - Toamasina' LIMIT 1),
+  '2026-01-20 10:00:00'
+WHERE NOT EXISTS (
+  SELECT 1 FROM voyages v
+  WHERE v.taxi_brousse_id = (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1)
+    AND v.date_depart = '2026-01-20 10:00:00'
+);
 
--- Voyage 10 (passé Tana-Toamasina): réservations pour statistiques
-INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation) VALUES
-(10, 5, 500000.00, '2026-01-08 12:00:00'), -- 2 VIP + 1 PREMIUM
-(10, 1, 160000.00, '2026-01-08 13:00:00'); -- 2 STANDARD
+INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart)
+SELECT
+  (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1),
+  1,
+  (SELECT id FROM trajets WHERE nom = 'TNR - Toamasina' LIMIT 1),
+  '2026-01-21 10:00:00'
+WHERE NOT EXISTS (
+  SELECT 1 FROM voyages v
+  WHERE v.taxi_brousse_id = (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1)
+    AND v.date_depart = '2026-01-21 10:00:00'
+);
 
--- 12. Details des reservations (places avec indication du type)
--- Reservation 1 (Voyage 1 Tana-Majunga): A1, A2 (VIP), B1 (PREMIUM)
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(1, 'A1'),  -- VIP
-(1, 'A2'),  -- VIP
-(1, 'B1');  -- PREMIUM
+INSERT INTO voyages (taxi_brousse_id, chauffeur_id, trajet_id, date_depart)
+SELECT
+  (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1),
+  1,
+  (SELECT id FROM trajets WHERE nom = 'TNR - Toamasina' LIMIT 1),
+  '2026-01-21 15:00:00'
+WHERE NOT EXISTS (
+  SELECT 1 FROM voyages v
+  WHERE v.taxi_brousse_id = (SELECT id FROM taxi_brousses WHERE immatriculation = '1244-TBK' LIMIT 1)
+    AND v.date_depart = '2026-01-21 15:00:00'
+);
 
--- Reservation 2 (Voyage 2): A1 (VIP), B1, B2 (PREMIUM)
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(2, 'A1'),  -- VIP
-(2, 'B1'),  -- PREMIUM
-(2, 'B2');  -- PREMIUM
+-- 6) Contrats (diffusions_publicitaires) pour Socobis et Jejoo (prix unitaires choisis)
+INSERT INTO diffusions_publicitaires (annonceur_id, prix_unitaire, note)
+SELECT (SELECT id FROM annonceurs WHERE nom='Socobis' LIMIT 1), 100000.00, 'Contrat test Socobis'
+WHERE NOT EXISTS (SELECT 1 FROM diffusions_publicitaires dp WHERE dp.annonceur_id = (SELECT id FROM annonceurs WHERE nom='Socobis' LIMIT 1));
 
--- Reservation 3 (Voyage 3): A1, A2 (VIP)
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(3, 'A1'),  -- VIP
-(3, 'A2');  -- VIP
+INSERT INTO diffusions_publicitaires (annonceur_id, prix_unitaire, note)
+SELECT (SELECT id FROM annonceurs WHERE nom='Jejoo' LIMIT 1), 100000.00, 'Contrat test Jejoo'
+WHERE NOT EXISTS (SELECT 1 FROM diffusions_publicitaires dp WHERE dp.annonceur_id = (SELECT id FROM annonceurs WHERE nom='Jejoo' LIMIT 1));
 
--- Reservation 4 (Voyage 4): B1, B2, B3 (PREMIUM)
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(4, 'B1'),  -- PREMIUM
-(4, 'B2'),  -- PREMIUM
-(4, 'B3');  -- PREMIUM
 
--- Reservation 5 (Voyage 5 Tana-Diego): A1 (VIP), C1 (STANDARD)
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(5, 'A1'),  -- VIP
-(5, 'C1');  -- STANDARD
 
--- Reservations passées pour statistiques
-INSERT INTO details_reservations (reservation_id, numero_place) VALUES
-(6, 'A1'), (6, 'B1'),  -- Res 6
-(7, 'B2'), (7, 'B3'),  -- Res 7
-(8, 'A1'), (8, 'A2'),  -- Res 8
-(9, 'C1'), (9, 'C2'),  -- Res 9
-(10, 'A1'), (10, 'A2'), (10, 'B1'),  -- Res 10
-(11, 'C1'), (11, 'C2'); -- Res 11
+-- 20 Jan 2026 10:00 -> Vaniala 1, Lewis 1 (use JOINs so we don't insert NULLs)
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT dp.id, v.id, 1, dp.prix_unitaire, CAST(v.date_depart AS DATE)
+FROM diffusions_publicitaires dp
+JOIN annonceurs a ON a.id = dp.annonceur_id AND a.nom = 'Vaniala'
+JOIN voyages v ON v.date_depart = '2026-01-20 10:00:00'
+WHERE NOT EXISTS (
+  SELECT 1 FROM details_diffusion dd WHERE dd.voyage_id = v.id AND dd.diffusion_publicitaire_id = dp.id
+);
 
--- 13. Paiements (paiements complets et partiels)
-INSERT INTO paiements (reservation_id, montant_paye, date_paiement) VALUES
--- Paiements complets
-(1, 520000.00, '2026-01-10 14:30:00'),
-(2, 460000.00, '2026-01-11 15:30:00'),
-(3, 360000.00, '2026-01-12 10:30:00'),
-(5, 430000.00, '2026-01-13 17:30:00'),
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT dp.id, v.id, 1, dp.prix_unitaire, CAST(v.date_depart AS DATE)
+FROM diffusions_publicitaires dp
+JOIN annonceurs a ON a.id = dp.annonceur_id AND a.nom = 'Lewis'
+JOIN voyages v ON v.date_depart = '2026-01-20 10:00:00'
+WHERE NOT EXISTS (
+  SELECT 1 FROM details_diffusion dd WHERE dd.voyage_id = v.id AND dd.diffusion_publicitaire_id = dp.id
+);
 
--- Paiement partiel (acompte)
-(4, 100000.00, '2026-01-12 11:30:00'),
-(4, 320000.00, '2026-01-12 18:00:00'), -- complément
+-- 21 Jan 2026 10:00 -> Socobis 2, Jejoo 1
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT (SELECT id FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Socobis' LIMIT 1) LIMIT 1),
+       (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1),
+       2,
+       2 * (SELECT prix_unitaire FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Socobis' LIMIT 1) LIMIT 1),
+       '2026-01-21'
+WHERE NOT EXISTS (
+  SELECT 1 FROM details_diffusion dd
+  WHERE dd.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1)
+    AND dd.diffusion_publicitaire_id = (SELECT id FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Socobis' LIMIT 1) LIMIT 1)
+);
 
--- Paiements des réservations passées
-(6, 320000.00, '2026-01-03 10:30:00'),
-(7, 280000.00, '2026-01-03 11:30:00'),
-(8, 360000.00, '2026-01-05 09:30:00'),
-(9, 180000.00, '2026-01-05 10:30:00'),
-(10, 500000.00, '2026-01-08 12:30:00'),
-(11, 160000.00, '2026-01-08 13:30:00');
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT (SELECT id FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Jejoo' LIMIT 1) LIMIT 1),
+       (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1),
+       1,
+       1 * (SELECT prix_unitaire FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Jejoo' LIMIT 1) LIMIT 1),
+       '2026-01-21'
+WHERE NOT EXISTS (
+  SELECT 1 FROM details_diffusion dd
+  WHERE dd.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1)
+    AND dd.diffusion_publicitaire_id = (SELECT id FROM diffusions_publicitaires WHERE annonceur_id = (SELECT id FROM annonceurs WHERE nom='Jejoo' LIMIT 1) LIMIT 1)
+);
 
--- 14. Configurations
-INSERT INTO configurations (cle, valeur) VALUES
-('devise', 'MGA'),
-('prix_litre_carburant', '5000'),
-('delai_annulation', '24h'),
-('commission_reservation', '5'),
-('tva', '20');
+-- 21 Jan 2026 15:00 -> 0 pub (aucune insertion)
+
+
+-- 2) Détail des diffusions pour le voyage 20 Jan 2026 10:00 (Vaniala 1, Lewis 1)
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT dp.id,
+       v.id,
+       1,
+       1 * dp.prix_unitaire,
+       CAST(v.date_depart AS DATE)
+FROM diffusions_publicitaires dp
+JOIN annonceurs a ON a.id = dp.annonceur_id
+JOIN voyages v ON v.date_depart = '2026-01-20 10:00:00'
+WHERE a.nom = 'Vaniala'
+  AND NOT EXISTS (
+    SELECT 1 FROM details_diffusion dd
+    WHERE dd.voyage_id = v.id AND dd.diffusion_publicitaire_id = dp.id
+  );
+
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion)
+SELECT dp.id,
+       v.id,
+       1,
+       1 * dp.prix_unitaire,
+       CAST(v.date_depart AS DATE)
+FROM diffusions_publicitaires dp
+JOIN annonceurs a ON a.id = dp.annonceur_id
+JOIN voyages v ON v.date_depart = '2026-01-20 10:00:00'
+WHERE a.nom = 'Lewis'
+  AND NOT EXISTS (
+    SELECT 1 FROM details_diffusion dd
+    WHERE dd.voyage_id = v.id AND dd.diffusion_publicitaire_id = dp.id
+  );
+
+-- (Optionnel) Exemple de paiement pour tester le prorata (Vaniala paie 40% = 40% du total dû)
+INSERT INTO paiements_annonceurs (annonceur_id, montant_paye, date_paiement)
+SELECT a.id, (SELECT COALESCE(SUM(dd.montant_total),0) FROM details_diffusion dd WHERE dd.diffusion_publicitaire_id IN (SELECT id FROM diffusions_publicitaires WHERE annonceur_id = a.id) ) * 0.4, CURRENT_DATE
+FROM annonceurs a
+WHERE a.nom = 'Vaniala';
+
+
+-- Détails des diffusions (liées aux voyages)
+-- Voyage 1 (id=1): Tana-Majunga du 15 janvier 2026
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion) VALUES
+(1, 1, 10, 1000000.00, '2026-01-15'),  -- Vaniala: 10 diffusions x 100000 = 1 000 000 Ar
+(2, 1, 5, 500000.00, '2026-01-15');    -- Lewis: 5 diffusions x 100000 = 500 000 Ar
+
+-- Voyage 2 (id=2): Tana-Toamasina du 15 janvier 2026 (si existe)
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion) VALUES
+(1, 2, 8, 800000.00, '2026-01-15'),    -- Vaniala: 8 diffusions x 100000 = 800 000 Ar
+(2, 2, 3, 300000.00, '2026-01-15');    -- Lewis: 3 diffusions x 100000 = 300 000 Ar
+
+-- Voyage 3 (id=3)
+INSERT INTO details_diffusion (diffusion_publicitaire_id, voyage_id, nb_diffusions, montant_total, date_diffusion) VALUES
+(1, 3, 5, 500000.00, '2026-01-16'),    -- Vaniala: 5 diffusions x 100000 = 500 000 Ar
+(2, 3, 4, 400000.00, '2026-01-16');    -- Lewis: 4 diffusions x 100000 = 400 000 Ar
+
+
+-- 4. Arrêts (avec indication si c'est une gare routière)
+-- Insère les arrêts demandés si ils n'existent pas
+INSERT INTO arrets (nom, est_gare)
+SELECT 'Gare routière Fasankarana (Tana)', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'Gare routière Fasankarana (Tana)');
+
+INSERT INTO arrets (nom, est_gare)
+SELECT 'Gare routière Majunga', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'Gare routière Majunga');
+
+INSERT INTO arrets (nom, est_gare)
+SELECT 'Gare routière Ambolomandinika Toamasina', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'Gare routière Ambolomandinika Toamasina');
+
+-- Alias / code aéroport (optionnel)
+INSERT INTO arrets (nom, est_gare)
+SELECT 'TNR - Toamasina', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'TNR - Toamasina');
+
+-- Ajout d'arrêts intermédiaires fréquents (optionnel)
+INSERT INTO arrets (nom, est_gare)
+SELECT 'Moramanga', FALSE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'Moramanga');
+
+INSERT INTO arrets (nom, est_gare)
+SELECT 'Brickaville', FALSE
+WHERE NOT EXISTS (SELECT 1 FROM arrets WHERE nom = 'Brickaville');
+
+
+
+--23/01/25
+-- 1) Trajet TNR - Toamasina (si absent)
+INSERT INTO trajets (nom, distance)
+SELECT 'TNR - Toamasina', 365.0
+WHERE NOT EXISTS (SELECT 1 FROM trajets WHERE nom = 'TNR - Toamasina');
+
+-- Ajout des arrêts pour le trajet (Fasankarana id=1 -> Toamasina id=3)
+INSERT INTO trajet_details (trajet_id, arret_id, ordre)
+SELECT t.id, 1, 1
+FROM trajets t
+WHERE t.nom = 'TNR - Toamasina'
+  AND NOT EXISTS (SELECT 1 FROM trajet_details td WHERE td.trajet_id = t.id AND td.ordre = 1);
+
+INSERT INTO trajet_details (trajet_id, arret_id, ordre)
+SELECT t.id, 3, 2
+FROM trajets t
+WHERE t.nom = 'TNR - Toamasina'
+  AND NOT EXISTS (SELECT 1 FROM trajet_details td WHERE td.trajet_id = t.id AND td.ordre = 2);
+
+-- 2ter) Tarifs pour le trajet TNR - Toamasina (prix STANDARD = 50,000 Ar)
+INSERT INTO tarifs_places (trajet_id, type_place, montant, date_effective)
+SELECT t.id, 'VIP', 180000.00, '2024-01-01'
+FROM trajets t
+WHERE t.nom = 'TNR - Toamasina'
+  AND NOT EXISTS (SELECT 1 FROM tarifs_places tp WHERE tp.trajet_id = t.id AND tp.type_place = 'VIP');
+
+INSERT INTO tarifs_places (trajet_id, type_place, montant, date_effective)
+SELECT t.id, 'PREMIUM', 100000.00, '2024-01-01'
+FROM trajets t
+WHERE t.nom = 'TNR - Toamasina'
+  AND NOT EXISTS (SELECT 1 FROM tarifs_places tp WHERE tp.trajet_id = t.id AND tp.type_place = 'PREMIUM');
+
+INSERT INTO tarifs_places (trajet_id, type_place, montant, date_effective)
+SELECT t.id, 'STANDARD', 50000.00, '2024-01-01'
+FROM trajets t
+WHERE t.nom = 'TNR - Toamasina'
+  AND NOT EXISTS (SELECT 1 FROM tarifs_places tp WHERE tp.trajet_id = t.id AND tp.type_place = 'STANDARD');
+
+
+
+-- 4) Réservations (tickets vendus)
+-- prix billet adulte économique = 50 000 Ar
+-- Voyage 20 Jan 2026 10:00 -> 40 billets => 40 * 50000 = 2 000 000
+INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation)
+SELECT (SELECT id FROM voyages WHERE date_depart = '2026-01-20 10:00:00' LIMIT 1),
+       (SELECT id FROM clients LIMIT 1),
+       2000000.00,
+       '2026-01-18'
+WHERE NOT EXISTS (SELECT 1 FROM reservations r WHERE r.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-20 10:00:00' LIMIT 1) AND r.montant_total = 2000000.00);
+
+-- Voyage 21 Jan 2026 10:00 -> 30 billets => 1 500 000
+INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation)
+SELECT (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1),
+       (SELECT id FROM clients LIMIT 1),
+       1500000.00,
+       '2026-01-19'
+WHERE NOT EXISTS (SELECT 1 FROM reservations r WHERE r.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-21 10:00:00' LIMIT 1) AND r.montant_total = 1500000.00);
+
+-- Voyage 21 Jan 2026 15:00 -> 50 billets => 2 500 000
+INSERT INTO reservations (voyage_id, client_id, montant_total, date_reservation)
+SELECT (SELECT id FROM voyages WHERE date_depart = '2026-01-21 15:00:00' LIMIT 1),
+       (SELECT id FROM clients LIMIT 1),
+       2500000.00,
+       '2026-01-19'
+WHERE NOT EXISTS (SELECT 1 FROM reservations r WHERE r.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-21 15:00:00' LIMIT 1) AND r.montant_total = 2500000.00);
+
+
+
