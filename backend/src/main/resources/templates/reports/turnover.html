@@ -58,6 +58,81 @@
             </div>
             <div class="col-md-3">
                 <div class="card-metric">
+                    <div class="label"><i class="bi bi-ticket-detailed me-2 text-info"></i>CA Tickets</div>
+                    <div class="value text-info" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1">Ventes de billets</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-megaphone me-2 text-warning"></i>CA Publicité</div>
+                    <div class="value text-warning" th:text="${#numbers.formatDecimal(totalCAPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1">Diffusions publicitaires</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-graph-up me-2 text-success"></i>CA Total Global</div>
+                    <div class="value text-success" th:text="${#numbers.formatDecimal(totalCAGlobal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1">Tickets + Publicité</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section CA par Voyage (Tickets + Pub) - Selon le sujet -->
+        <h4 class="section-title"><i class="bi bi-cash-stack me-2"></i>Chiffre d'affaires par Voyage</h4>
+        <div class="table-container mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Gare départ</th>
+                        <th>Gare arrivée</th>
+                        <th>Véhicule</th>
+                        <th>Date départ</th>
+                        <th>Heure départ</th>
+                        <th class="text-end">CA Tickets</th>
+                        <th class="text-end">CA Pub</th>
+                        <th class="text-end">CA Pub Payé</th>
+                        <th class="text-end">CA Pub Restant</th>
+                        <th class="text-end">CA Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${voyagesCAComplet == null || voyagesCAComplet.isEmpty()}">
+                        <td colspan="8" class="text-center text-muted py-4">Aucun voyage pour la période.</td>
+                    </tr>
+                    <tr th:each="v : ${voyagesCAComplet}">
+                        <td th:text="${v.gareDepart}">-</td>
+                        <td th:text="${v.gareArrivee}">-</td>
+                        <td><span class="fw-semibold" th:text="${v.immatriculation}">-</span></td>
+                        <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'dd/MM/yyyy') : ''}">-</td>
+                        <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'HH:mm') : ''}">-</td>
+                        <td class="text-end text-info" th:text="${#numbers.formatDecimal(v.caTickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end text-warning" th:text="${#numbers.formatDecimal(v.caPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end text-success" th:text="${#numbers.formatDecimal(v.caPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end" th:classappend="${v.caPubRestant.compareTo(T(java.math.BigDecimal).ZERO) <= 0 ? 'text-success' : 'text-warning'}" th:text="${#numbers.formatDecimal(v.caPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end fw-semibold text-success" th:text="${#numbers.formatDecimal(v.caTotal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                    </tr>
+                    </tbody>
+                    <tfoot class="table-light">
+                    <tr>
+                        <td colspan="5" class="text-end fw-bold">Total:</td>
+                        <td class="text-end text-info fw-bold" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end text-warning fw-bold" th:text="${#numbers.formatDecimal(totalCAPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end text-success fw-bold" th:text="${#numbers.formatDecimal(totalCAPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(totalCAPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="text-end text-success fw-bold" th:text="${#numbers.formatDecimal(totalCAGlobal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Cards supplémentaires pour CA Max -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card-metric">
                     <div class="label"><i class="bi bi-graph-up-arrow me-2 text-success"></i>CA Max Potentiel</div>
                     <div class="value text-success" th:text="${#numbers.formatDecimal(totalCAMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
                     <div class="text-muted mt-1">Si toutes les places étaient vendues</div>
@@ -80,6 +155,13 @@
                     <div class="label"><i class="bi bi-map me-2"></i>Voyages (dans la période)</div>
                     <div class="value" th:text="${voyagesCount}">0</div>
                     <div class="text-muted mt-1">Groupé par voyage</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-metric">
+                    <div class="label"><i class="bi bi-cash-coin me-2"></i>CA Réel Total</div>
+                    <div class="value" th:text="${#numbers.formatDecimal(totalCAReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="text-muted mt-1">Ventes réelles</div>
                 </div>
             </div>
         </div>

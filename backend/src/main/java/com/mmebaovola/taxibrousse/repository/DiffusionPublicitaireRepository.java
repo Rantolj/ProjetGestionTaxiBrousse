@@ -14,20 +14,63 @@ import java.util.List;
 @Repository
 public interface DiffusionPublicitaireRepository extends JpaRepository<DiffusionPublicitaire, Long> {
 
-    @Query("SELECT COALESCE(SUM(d.prixUnitaire * d.nbDiffusions), 0) FROM DiffusionPublicitaire d WHERE d.dateDiffusion >= :from AND d.dateDiffusion < :to")
-    BigDecimal sumTarifBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+       /**
+        * Calcule le CA total des diffusions publicitaires sur une période
+        * Utilise la table details_diffusion pour les diffusions effectives
+        */
+       @Query(value = """
+                     SELECT COALESCE(SUM(dd.montant_total), 0)
+                     FROM details_diffusion dd
+                     WHERE dd.date_diffusion >= :from AND dd.date_diffusion < :to
+                     """, nativeQuery = true)
+       BigDecimal sumTarifBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
-    @Query("SELECT new com.mmebaovola.taxibrousse.repository.SocieteCaProjection(d.annonceur.id, d.annonceur.nom, COALESCE(SUM(d.prixUnitaire * d.nbDiffusions),0)) " +
-           "FROM DiffusionPublicitaire d WHERE d.dateDiffusion >= :from AND d.dateDiffusion < :to GROUP BY d.annonceur.id, d.annonceur.nom")
-    List<SocieteCaProjection> findCaPerSocieteBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+       /**
+        * CA par société/annonceur sur une période
+        */
+       @Query(value = """
+                     SELECT a.id AS annonceurId, a.nom AS nom, COALESCE(SUM(dd.montant_total), 0) AS ca
+                     FROM annonceurs a
+                     LEFT JOIN diffusions_publicitaires dp ON dp.annonceur_id = a.id
+                     LEFT JOIN details_diffusion dd ON dd.diffusion_publicitaire_id = dp.id
+                         AND dd.date_diffusion >= :from AND dd.date_diffusion < :to
+                     GROUP BY a.id, a.nom
+                     ORDER BY ca DESC
+                     """, nativeQuery = true)
+       List<SocieteCaProjection> findCaPerSocieteBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
-    @Query("SELECT new com.mmebaovola.taxibrousse.dto.AnnonceurDetailsDto(" +
-           "d.annonceur.id, d.annonceur.nom, " +
-           "COALESCE(SUM(d.prixUnitaire * d.nbDiffusions), 0), " +
-           "COALESCE(SUM(d.nbDiffusions), 0), " +
-           "COALESCE(AVG(d.prixUnitaire), 0)) " +
-           "FROM DiffusionPublicitaire d WHERE d.dateDiffusion >= :from AND d.dateDiffusion < :to " +
-           "GROUP BY d.annonceur.id, d.annonceur.nom " +
-           "ORDER BY SUM(d.prixUnitaire * d.nbDiffusions) DESC")
-    List<AnnonceurDetailsDto> findDetailedCaPerSocieteBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+       /**
+        * Détails CA par annonceur avec statistiques sur une période
+        */
+       @Query(value = """
+                     SELECT
+                         a.id AS annonceurId,
+                         a.nom AS nom,
+                         COALESCE(SUM(dd.montant_total), 0) AS ca,
+                         COALESCE(SUM(dd.nb_diffusions), 0) AS nbDiffusions,
+                         COALESCE(AVG(dp.prix_unitaire), 0) AS avgPrix
+                     FROM annonceurs a
+                     LEFT JOIN diffusions_publicitaires dp ON dp.annonceur_id = a.id
+                     LEFT JOIN details_diffusion dd ON dd.diffusion_publicitaire_id = dp.id
+                         AND dd.date_diffusion >= :from AND dd.date_diffusion < :to
+                     GROUP BY a.id, a.nom
+                     ORDER BY ca DESC
+                     """, nativeQuery = true)
+       List<AnnonceurDetailsCaView> findDetailedCaPerSocieteBetween(@Param("from") LocalDate from,
+                     @Param("to") LocalDate to);
+
+       /**
+        * Interface pour projection détaillée des CA par annonceur
+        */
+       interface AnnonceurDetailsCaView {
+              Long getAnnonceurId();
+
+              String getNom();
+
+              BigDecimal getCa();
+
+              Long getNbDiffusions();
+
+              BigDecimal getAvgPrix();
+       }
 }

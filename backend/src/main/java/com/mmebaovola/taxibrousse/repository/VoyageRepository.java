@@ -73,7 +73,7 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
                     GROUP BY v.id, v.taxi_brousse_id
                 ), 0) AS caMax,
                 COALESCE((
-                    SELECT SUM(r.montant_total) 
+                    SELECT SUM(r.montant_total)
                     FROM reservations r
                     WHERE r.voyage_id = v.id
                 ), 0) AS caReel,
@@ -107,6 +107,87 @@ public interface VoyageRepository extends JpaRepository<Voyage, Long> {
             ORDER BY v.date_depart DESC
             """, nativeQuery = true)
     List<VoyageCAMaxView> findVoyagesWithCAMax(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Vue complète CA par voyage incluant gares départ/arrivée et CA publicité
+     */
+    interface VoyageCACompletView {
+        Long getVoyageId();
+
+        String getGareDepart();
+
+        String getGareArrivee();
+
+        String getImmatriculation();
+
+        LocalDateTime getDateDepart();
+
+        BigDecimal getCaTickets();
+
+        BigDecimal getCaPub();
+
+        BigDecimal getCaPubPaye();
+
+        BigDecimal getCaPubRestant();
+
+        BigDecimal getCaTotal();
+    }
+
+    @Query(value = """
+            SELECT
+                v.id AS voyageId,
+                COALESCE(a_depart.nom, 'N/A') AS gareDepart,
+                COALESCE(a_arrivee.nom, 'N/A') AS gareArrivee,
+                tb.immatriculation AS immatriculation,
+                v.date_depart AS dateDepart,
+                COALESCE((SELECT SUM(r.montant_total) FROM reservations r WHERE r.voyage_id = v.id), 0) AS caTickets,
+                COALESCE((SELECT SUM(dd.montant_total) FROM details_diffusion dd WHERE dd.voyage_id = v.id), 0) AS caPub,
+                -- CA publicité déjà payée (prorata basé sur paiements annonceur / total dû annonceur)
+                COALESCE((
+                    SELECT SUM(
+                        dd_local.montant_total
+                        * COALESCE((SELECT SUM(p.montant_paye) FROM paiements_annonceurs p WHERE p.annonceur_id = dp_local.annonceur_id), 0)
+                        / NULLIF((SELECT SUM(dd_all.montant_total) FROM details_diffusion dd_all
+                                  JOIN diffusions_publicitaires dp_all ON dp_all.id = dd_all.diffusion_publicitaire_id
+                                  WHERE dp_all.annonceur_id = dp_local.annonceur_id), 0)
+                    )
+                    FROM details_diffusion dd_local
+                    JOIN diffusions_publicitaires dp_local ON dp_local.id = dd_local.diffusion_publicitaire_id
+                    WHERE dd_local.voyage_id = v.id
+                ), 0) AS caPubPaye,
+                -- CA publicité restant à payer (caPub - caPubPaye)
+                COALESCE((SELECT SUM(dd.montant_total) FROM details_diffusion dd WHERE dd.voyage_id = v.id), 0)
+                    - COALESCE((
+                        SELECT SUM(
+                            dd_local.montant_total
+                            * COALESCE((SELECT SUM(p.montant_paye) FROM paiements_annonceurs p WHERE p.annonceur_id = dp_local.annonceur_id), 0)
+                            / NULLIF((SELECT SUM(dd_all.montant_total) FROM details_diffusion dd_all
+                                      JOIN diffusions_publicitaires dp_all ON dp_all.id = dd_all.diffusion_publicitaire_id
+                                      WHERE dp_all.annonceur_id = dp_local.annonceur_id), 0)
+                        )
+                        FROM details_diffusion dd_local
+                        JOIN diffusions_publicitaires dp_local ON dp_local.id = dd_local.diffusion_publicitaire_id
+                        WHERE dd_local.voyage_id = v.id
+                    ), 0) AS caPubRestant,
+                COALESCE((SELECT SUM(r.montant_total) FROM reservations r WHERE r.voyage_id = v.id), 0)
+                    + COALESCE((SELECT SUM(dd.montant_total) FROM details_diffusion dd WHERE dd.voyage_id = v.id), 0) AS caTotal
+            FROM voyages v
+            JOIN taxi_brousses tb ON tb.id = v.taxi_brousse_id
+            JOIN trajets t ON t.id = v.trajet_id
+            LEFT JOIN trajet_details td_depart ON td_depart.trajet_id = t.id AND td_depart.ordre = (
+                SELECT MIN(td2.ordre) FROM trajet_details td2 WHERE td2.trajet_id = t.id
+            )
+            LEFT JOIN arrets a_depart ON a_depart.id = td_depart.arret_id
+            LEFT JOIN trajet_details td_arrivee ON td_arrivee.trajet_id = t.id AND td_arrivee.ordre = (
+                SELECT MAX(td3.ordre) FROM trajet_details td3 WHERE td3.trajet_id = t.id
+            )
+            LEFT JOIN arrets a_arrivee ON a_arrivee.id = td_arrivee.arret_id
+            WHERE v.date_depart >= :startDate AND v.date_depart < :endDate
+            ORDER BY v.date_depart DESC
+            """, nativeQuery = true)
+    List<VoyageCACompletView> findVoyagesWithCAComplet(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }

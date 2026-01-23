@@ -110,7 +110,7 @@
         .content::-webkit-scrollbar-thumb:hover {
             background: #95a5a6;
         }
-    </style>;
+    </style>
 
 </head>
 <body>
@@ -151,10 +151,13 @@
                 <i class="bi bi-bar-chart-line"></i> Chiffre d'affaires
             </a>
             <a href="/publicite/ca" class="nav-link" th:classappend="${currentPage == 'publicite-ca' ? 'active' : ''}">
-                <i class="bi bi-megaphone"></i> CA Publicité
+                <i class="bi bi-megaphone"></i> CA Publicite
             </a>
             <a href="/publicite/paiements" class="nav-link" th:classappend="${currentPage == 'publicite-paiements' ? 'active' : ''}">
                 <i class="bi bi-credit-card"></i> Paiements Annonceurs
+            </a>
+            <a href="/publicite/prorata" class="nav-link" th:classappend="${currentPage == 'publicite-prorata' ? 'active' : ''}">
+                <i class="bi bi-pie-chart"></i> Prorata Paiements
             </a>
             <a href="/trajets" class="nav-link" th:classappend="${currentPage == 'trajets' ? 'active' : ''}">>
                 <i class="bi bi-signpost-2"></i> Trajets
@@ -164,7 +167,6 @@
             </a>
         </nav>
     </div>
-
     <!-- Main Content Area -->
     <div class="main-content">
         <!-- Top Bar -->

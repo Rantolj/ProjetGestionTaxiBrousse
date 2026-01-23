@@ -1,6 +1,7 @@
 package com.mmebaovola.taxibrousse.controller;
 
 import com.mmebaovola.taxibrousse.dto.AnnonceurDetailsDto;
+import com.mmebaovola.taxibrousse.dto.AnnonceurProrataDto;
 import com.mmebaovola.taxibrousse.dto.CaResponseDto;
 import com.mmebaovola.taxibrousse.entity.PaiementAnnonceur;
 import com.mmebaovola.taxibrousse.entity.SocietePublicitaire;
@@ -110,5 +111,66 @@ public class PubliciteController {
 			redirectAttributes.addFlashAttribute("error", "Erreur lors de l'ajout du paiement: " + e.getMessage());
 		}
 		return "redirect:/publicite/paiements";
+	}
+
+	// ===================== PRORATA =====================
+
+	/**
+	 * Affiche le détail du prorata des paiements par diffusion
+	 * Le prorata répartit les paiements proportionnellement sur chaque diffusion
+	 */
+	@GetMapping("/prorata")
+	public String prorataList(@RequestParam(value = "annonceurId", required = false) Long annonceurId,
+			Model model) {
+		List<SocietePublicitaire> annonceurs = publiciteService.getAllAnnonceurs();
+		List<AnnonceurProrataDto> prorataList;
+
+		if (annonceurId != null) {
+			// Prorata pour un annonceur spécifique
+			AnnonceurProrataDto prorata = publiciteService.calculerProrata(annonceurId);
+			prorataList = List.of(prorata);
+		} else {
+			// Prorata pour tous les annonceurs
+			prorataList = publiciteService.calculerProrataAllAnnonceurs();
+		}
+
+		// Calculer les totaux globaux
+		BigDecimal totalGlobalDu = prorataList.stream()
+				.map(AnnonceurProrataDto::getTotalDu)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal totalGlobalPaye = prorataList.stream()
+				.map(AnnonceurProrataDto::getTotalPaye)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal totalGlobalSolde = prorataList.stream()
+				.map(AnnonceurProrataDto::getSoldeRestant)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		model.addAttribute("prorataList", prorataList);
+		model.addAttribute("annonceurs", annonceurs);
+		model.addAttribute("selectedAnnonceurId", annonceurId);
+		model.addAttribute("totalGlobalDu", totalGlobalDu);
+		model.addAttribute("totalGlobalPaye", totalGlobalPaye);
+		model.addAttribute("totalGlobalSolde", totalGlobalSolde);
+		model.addAttribute("currentPage", "publicite-prorata");
+		model.addAttribute("pageTitle", "Prorata des paiements");
+		return "publicite/prorata";
+	}
+
+	/**
+	 * API JSON pour récupérer le prorata d'un annonceur
+	 */
+	@GetMapping("/prorata/json")
+	@ResponseBody
+	public AnnonceurProrataDto prorataJson(@RequestParam("annonceurId") Long annonceurId) {
+		return publiciteService.calculerProrata(annonceurId);
+	}
+
+	/**
+	 * API JSON pour récupérer le prorata de tous les annonceurs
+	 */
+	@GetMapping("/prorata/all/json")
+	@ResponseBody
+	public List<AnnonceurProrataDto> prorataAllJson() {
+		return publiciteService.calculerProrataAllAnnonceurs();
 	}
 }

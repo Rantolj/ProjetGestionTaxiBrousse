@@ -2,26 +2,23 @@ package com.mmebaovola.taxibrousse.repository;
 
 import java.math.BigDecimal;
 
-public class SocieteCaProjection {
-    private Long societeId;
-    private String nom;
-    private BigDecimal montant;
+/**
+ * Interface de projection pour le CA par société/annonceur
+ * Utilisée par les requêtes natives qui retournent des tuples
+ */
+public interface SocieteCaProjection {
+    Long getAnnonceurId();
 
-    public SocieteCaProjection(Long societeId, String nom, BigDecimal montant) {
-        this.societeId = societeId;
-        this.nom = nom;
-        this.montant = montant;
+    String getNom();
+
+    BigDecimal getCa();
+
+    // Alias pour compatibilité avec l'ancien code
+    default Long getSocieteId() {
+        return getAnnonceurId();
     }
 
-    public Long getSocieteId() {
-        return societeId;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public BigDecimal getMontant() {
-        return montant;
+    default BigDecimal getMontant() {
+        return getCa();
     }
 }

@@ -1,3 +1,4 @@
 .sql
 /backend/src/main/resources
 data.sql
+backend/reset-db.ps1

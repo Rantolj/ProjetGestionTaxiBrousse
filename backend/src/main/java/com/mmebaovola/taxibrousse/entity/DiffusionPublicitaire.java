@@ -2,9 +2,9 @@ package com.mmebaovola.taxibrousse.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "diffusions_publicitaires")
@@ -18,19 +18,16 @@ public class DiffusionPublicitaire {
     @JoinColumn(name = "annonceur_id")
     private SocietePublicitaire annonceur;
 
-    @Column(name = "date_diffusion", nullable = false)
-    private LocalDate dateDiffusion;
-
-    @Column(name = "nb_diffusions", nullable = false)
-    private Integer nbDiffusions = 1;
-
     @Column(name = "prix_unitaire", nullable = false, precision = 15, scale = 2)
     private BigDecimal prixUnitaire;
 
-    @Column(name = "montant_total", precision = 15, scale = 2)
-    private BigDecimal montantTotal;
-
     private String note;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "diffusionPublicitaire", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DetailsDiffusion> detailsDiffusions = new ArrayList<>();
 
     // getters / setters
     public Long getId() {
@@ -49,36 +46,12 @@ public class DiffusionPublicitaire {
         this.annonceur = annonceur;
     }
 
-    public LocalDate getDateDiffusion() {
-        return dateDiffusion;
-    }
-
-    public void setDateDiffusion(LocalDate dateDiffusion) {
-        this.dateDiffusion = dateDiffusion;
-    }
-
-    public Integer getNbDiffusions() {
-        return nbDiffusions;
-    }
-
-    public void setNbDiffusions(Integer nbDiffusions) {
-        this.nbDiffusions = nbDiffusions;
-    }
-
     public BigDecimal getPrixUnitaire() {
         return prixUnitaire;
     }
 
     public void setPrixUnitaire(BigDecimal prixUnitaire) {
         this.prixUnitaire = prixUnitaire;
-    }
-
-    public BigDecimal getMontantTotal() {
-        return montantTotal;
-    }
-
-    public void setMontantTotal(BigDecimal montantTotal) {
-        this.montantTotal = montantTotal;
     }
 
     public String getNote() {
@@ -89,17 +62,19 @@ public class DiffusionPublicitaire {
         this.note = note;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DiffusionPublicitaire)) return false;
-        DiffusionPublicitaire that = (DiffusionPublicitaire) o;
-        return Objects.equals(id, that.id);
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public List<DetailsDiffusion> getDetailsDiffusions() {
+        return detailsDiffusions;
+    }
+
+    public void setDetailsDiffusions(List<DetailsDiffusion> detailsDiffusions) {
+        this.detailsDiffusions = detailsDiffusions;
     }
 }
-

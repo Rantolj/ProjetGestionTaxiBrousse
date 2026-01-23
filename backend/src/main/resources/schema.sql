@@ -1,4 +1,4 @@
-CREATE DATABASE taxibrousse
+CREATE DATABASE taxibrousse;
 \c taxibrousse
 
 CREATE TABLE IF NOT EXISTS personnes
@@ -148,15 +148,23 @@ CREATE TABLE IF NOT EXISTS annonceurs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2) diffusions_publicitaires
+-- 2) diffusions_publicitaires (contrat/accord publicitaire avec un annonceur)
 CREATE TABLE IF NOT EXISTS diffusions_publicitaires (
   id SERIAL PRIMARY KEY,
   annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),
-  date_diffusion DATE NOT NULL,
-  nb_diffusions INTEGER NOT NULL DEFAULT 1,
-  prix_unitaire DECIMAL(15,2) NOT NULL,    -- par diffusion
-  montant_total DECIMAL(15,2) GENERATED ALWAYS AS (nb_diffusions * prix_unitaire) STORED,
+  prix_unitaire DECIMAL(15,2) NOT NULL,    -- prix par diffusion
   note TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3) details_diffusion (diffusions effectives liées aux voyages)
+CREATE TABLE IF NOT EXISTS details_diffusion (
+  id SERIAL PRIMARY KEY,
+  diffusion_publicitaire_id INTEGER NOT NULL REFERENCES diffusions_publicitaires(id),
+  voyage_id INTEGER NOT NULL REFERENCES voyages(id),
+  nb_diffusions INTEGER NOT NULL DEFAULT 1,
+  montant_total DECIMAL(15,2) NOT NULL DEFAULT 0, -- calculé: nb_diffusions * prix_unitaire du contrat
+  date_diffusion DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

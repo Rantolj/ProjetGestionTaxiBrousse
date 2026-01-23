@@ -130,8 +130,7 @@ CREATE TABLE IF NOT EXISTS annonceurs (
 -- 2) diffusions_publicitaires
 CREATE TABLE IF NOT EXISTS diffusions_publicitaires (
   id SERIAL PRIMARY KEY,
-  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),
-  taxi_brousse_id INTEGER REFERENCES taxi_brousses(id), -- optionnel : si lié à un véhicule
+  annonceur_id INTEGER NOT NULL REFERENCES annonceurs(id),-- optionnel : si lié à un véhicule
   voyage_id INTEGER REFERENCES voyages(id),             -- optionnel : si lié à un voyage
   date_diffusion DATE NOT NULL,
   nb_diffusions INTEGER NOT NULL DEFAULT 1,
@@ -149,3 +148,5 @@ CREATE TABLE IF NOT EXISTS paiements_annonceurs (
   date_paiement DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+

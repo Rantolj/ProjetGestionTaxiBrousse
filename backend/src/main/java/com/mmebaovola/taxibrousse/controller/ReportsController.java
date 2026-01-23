@@ -3,6 +3,7 @@ package com.mmebaovola.taxibrousse.controller;
 import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository.VoyageCAMaxView;
+import com.mmebaovola.taxibrousse.repository.VoyageRepository.VoyageCACompletView;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,6 +59,22 @@ public class ReportsController {
                         BigDecimal caMax,
                         BigDecimal caReel,
                         Integer tauxRemplissage) {
+        }
+
+        /**
+         * Record pour le CA complet par voyage (Tickets + Pub)
+         */
+        public record VoyageCACompletRecord(
+                        Long voyageId,
+                        String gareDepart,
+                        String gareArrivee,
+                        String immatriculation,
+                        LocalDateTime dateDepart,
+                        BigDecimal caTickets,
+                        BigDecimal caPub,
+                        BigDecimal caPubPaye,
+                        BigDecimal caPubRestant,
+                        BigDecimal caTotal) {
         }
 
         @GetMapping("/turnover")
@@ -127,6 +144,31 @@ public class ReportsController {
                                                 v.getTauxRemplissage() != null ? v.getTauxRemplissage() : 0))
                                 .toList();
 
+                // CA Complet par voyage (Tickets + Pub) - selon le sujet
+                List<VoyageCACompletRecord> voyagesCAComplet = voyageRepository
+                                .findVoyagesWithCAComplet(startInclusive, endExclusive)
+                                .stream()
+                                .map(v -> new VoyageCACompletRecord(
+                                                v.getVoyageId(),
+                                                v.getGareDepart() != null ? v.getGareDepart() : "N/A",
+                                                v.getGareArrivee() != null ? v.getGareArrivee() : "N/A",
+                                                v.getImmatriculation(),
+                                                v.getDateDepart(),
+                                                v.getCaTickets() != null ? v.getCaTickets() : BigDecimal.ZERO,
+                                                v.getCaPub() != null ? v.getCaPub() : BigDecimal.ZERO,
+                                                v.getCaPubPaye() != null ? v.getCaPubPaye() : BigDecimal.ZERO,
+                                                v.getCaPubRestant() != null ? v.getCaPubRestant() : BigDecimal.ZERO,
+                                                v.getCaTotal() != null ? v.getCaTotal() : BigDecimal.ZERO))
+                                .toList();
+
+                // Totaux pour CA Pub payé / restant
+                BigDecimal totalCAPubPaye = voyagesCAComplet.stream()
+                                .map(VoyageCACompletRecord::caPubPaye)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalCAPubRestant = voyagesCAComplet.stream()
+                                .map(VoyageCACompletRecord::caPubRestant)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
                 double totalCA = taxiDaily.stream().mapToDouble(TaxiDailyTurnoverView::total).sum();
                 long voyagesCount = voyages.size();
 
@@ -141,6 +183,17 @@ public class ReportsController {
                                 ? totalCAReel.multiply(BigDecimal.valueOf(100))
                                                 .divide(totalCAMax, 0, java.math.RoundingMode.HALF_UP).intValue()
                                 : 0;
+
+                // Calculs pour le CA Complet (Tickets + Pub)
+                BigDecimal totalCATickets = voyagesCAComplet.stream()
+                                .map(VoyageCACompletRecord::caTickets)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalCAPub = voyagesCAComplet.stream()
+                                .map(VoyageCACompletRecord::caPub)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalCAGlobal = voyagesCAComplet.stream()
+                                .map(VoyageCACompletRecord::caTotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 model.addAttribute("pageTitle", "Chiffre d'affaires");
                 model.addAttribute("currentPage", "reports-turnover");
@@ -161,6 +214,14 @@ public class ReportsController {
                 model.addAttribute("totalCAMax", totalCAMax);
                 model.addAttribute("totalCAReel", totalCAReel);
                 model.addAttribute("tauxGlobal", tauxGlobal);
+
+                // Nouveaux attributs pour CA Complet (Tickets + Pub)
+                model.addAttribute("voyagesCAComplet", voyagesCAComplet);
+                model.addAttribute("totalCATickets", totalCATickets);
+                model.addAttribute("totalCAPub", totalCAPub);
+                model.addAttribute("totalCAPubPaye", totalCAPubPaye);
+                model.addAttribute("totalCAPubRestant", totalCAPubRestant);
+                model.addAttribute("totalCAGlobal", totalCAGlobal);
 
                 return "reports/turnover";
         }
