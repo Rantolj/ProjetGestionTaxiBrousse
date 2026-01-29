@@ -4,6 +4,7 @@ import com.mmebaovola.taxibrousse.repository.ReservationRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository.VoyageCAMaxView;
 import com.mmebaovola.taxibrousse.repository.VoyageRepository.VoyageCACompletView;
+import com.mmebaovola.taxibrousse.service.VenteProduitService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,13 +24,16 @@ public class ReportsController {
         private final ReservationRepository reservationRepository;
         private final com.mmebaovola.taxibrousse.repository.TrajetRepository trajetRepository;
         private final VoyageRepository voyageRepository;
+        private final VenteProduitService venteProduitService;
 
         public ReportsController(ReservationRepository reservationRepository,
                         com.mmebaovola.taxibrousse.repository.TrajetRepository trajetRepository,
-                        VoyageRepository voyageRepository) {
+                        VoyageRepository voyageRepository,
+                        VenteProduitService venteProduitService) {
                 this.reservationRepository = reservationRepository;
                 this.trajetRepository = trajetRepository;
                 this.voyageRepository = voyageRepository;
+                this.venteProduitService = venteProduitService;
         }
 
         public record TaxiDailyTurnoverView(Long taxiId, String immatriculation, LocalDate jour, double total) {
@@ -195,6 +199,14 @@ public class ReportsController {
                                 .map(VoyageCACompletRecord::caTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                // CA Produits Extra : facturé (ventes) et encaissé (paiements)
+                BigDecimal totalCAProduits = venteProduitService.getTotalCA(fromDate, toDate);
+                BigDecimal totalCAProduitsPaye = venteProduitService.getTotalCAPaye(fromDate, toDate);
+
+                // CA TOTAL GLOBAL ENCAISSÉ = Tickets + Pub PAYÉ + Produits PAYÉS
+                // On utilise totalCAPubPaye et totalCAProduitsPaye (ce qui a été réellement encaissé)
+                BigDecimal caTotalGlobalComplet = totalCATickets.add(totalCAPubPaye).add(totalCAProduitsPaye);
+
                 model.addAttribute("pageTitle", "Chiffre d'affaires");
                 model.addAttribute("currentPage", "reports-turnover");
 
@@ -222,6 +234,11 @@ public class ReportsController {
                 model.addAttribute("totalCAPubPaye", totalCAPubPaye);
                 model.addAttribute("totalCAPubRestant", totalCAPubRestant);
                 model.addAttribute("totalCAGlobal", totalCAGlobal);
+
+                // CA Produits Extra (facturé et encaissé) et CA Total Global Complet
+                model.addAttribute("totalCAProduits", totalCAProduits);
+                model.addAttribute("totalCAProduitsPaye", totalCAProduitsPaye);
+                model.addAttribute("caTotalGlobalComplet", caTotalGlobalComplet);
 
                 return "reports/turnover";
         }
