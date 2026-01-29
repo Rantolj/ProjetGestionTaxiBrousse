@@ -452,4 +452,48 @@ SELECT (SELECT id FROM voyages WHERE date_depart = '2026-01-21 15:00:00' LIMIT 1
 WHERE NOT EXISTS (SELECT 1 FROM reservations r WHERE r.voyage_id = (SELECT id FROM voyages WHERE date_depart = '2026-01-21 15:00:00' LIMIT 1) AND r.montant_total = 2500000.00);
 
 
+--29/01/2026
+-- Produits
+INSERT INTO produits (libelle) VALUES
+  ('Eau 50cl'),
+  ('Tablette chocolat');
+
+-- Prix (même jour pour simplifier)
+INSERT INTO prix_produits (produit_id, prix, date_effective) VALUES
+  (1, 5000,  '2026-01-21'),
+  (2, 10000, '2026-01-21');
+
+-- Ventes (3 ventes sur la période)
+INSERT INTO ventes_produits (date_vente) VALUES
+  ('2026-01-26');  -- vente 1
+
+-- Détails des ventes
+-- Vente 1 : 10 eaux -> 10 * 5000 = 50 000 Ar
+INSERT INTO vente_produit_details (vente_id, produit_id, quantite, prix_unitaire) VALUES
+  (1, 1, 150, 5000);
+
+-- Vente 2 : 5 eaux + 3 chocolats -> 5*5000 + 3*10000 = 55 000 Ar
+INSERT INTO vente_produit_details (vente_id, produit_id, quantite, prix_unitaire) VALUES
+  (2, 1, 5, 5000),
+  (2, 2, 3, 10000);
+
+-- Vente 3 : 4 chocolats -> 4*10000 = 40 000 Ar
+INSERT INTO vente_produit_details (vente_id, produit_id, quantite, prix_unitaire) VALUES
+  (3, 2, 4, 10000);
+
+-- Paiements produits (pour tester facturé vs encaissé)
+-- Vente 1 : payée totalement
+INSERT INTO paiements_produits (vente_id, montant_paye, date_paiement) VALUES
+  (1, 450000, '2026-01-20');
+
+-- Vente 2 : payée partiellement (25 000 sur 55 000)
+INSERT INTO paiements_produits (vente_id, montant_paye, date_paiement) VALUES
+  (2, 25000, '2026-01-21');
+
+-- Vente 3 : rien encore payé
+
+-- Résultat attendu sur la période 20/01/2026 – 21/01/2026 :
+-- CA produits FACTURÉ   = 50 000 + 55 000 + 40 000 = 145 000 Ar
+-- CA produits ENCAISSÉ  = 50 000 + 25 000         = 75 000 Ar
+-- Reste à encaisser     = 145 000 - 75 000        = 70 000 Ar
 

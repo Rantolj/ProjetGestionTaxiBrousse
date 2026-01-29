@@ -1,5 +1,5 @@
-CREATE DATABASE taxibrousse;
-\c taxibrousse
+-- CREATE DATABASE taxibrousse;
+-- \c taxibrousse
 
 CREATE TABLE IF NOT EXISTS personnes
 (
@@ -190,5 +190,51 @@ ALTER TABLE details_reservations ALTER COLUMN passager_categorie SET NOT NULL;
 -- Add prix_unitaire column for audit trail
 ALTER TABLE details_reservations ADD COLUMN IF NOT EXISTS prix_unitaire DECIMAL(15, 2);
 -- Note: after verification you may remove `is_enfant` column in a later migration.
+
+-- =============================================================================
+-- VENTE DE PRODUITS EXTRA (eau, snacks, etc.)
+-- =============================================================================
+
+-- Table des produits (libellés)
+CREATE TABLE IF NOT EXISTS produits (
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des prix des produits (historique des prix)
+CREATE TABLE IF NOT EXISTS prix_produits (
+    id SERIAL PRIMARY KEY,
+    produit_id INTEGER NOT NULL REFERENCES produits(id),
+    prix DECIMAL(15, 2) NOT NULL,
+    date_effective DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des ventes (en-tête de vente)
+CREATE TABLE IF NOT EXISTS ventes_produits (
+    id SERIAL PRIMARY KEY,
+    date_vente DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des détails de vente (lignes de vente)
+CREATE TABLE IF NOT EXISTS vente_produit_details (
+    id SERIAL PRIMARY KEY,
+    vente_id INTEGER NOT NULL REFERENCES ventes_produits(id),
+    produit_id INTEGER NOT NULL REFERENCES produits(id),
+    quantite INTEGER NOT NULL DEFAULT 1,
+    prix_unitaire DECIMAL(15, 2) NOT NULL,  -- prix au moment de la vente
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des paiements pour les ventes de produits
+CREATE TABLE IF NOT EXISTS paiements_produits (
+    id SERIAL PRIMARY KEY,
+    vente_id INTEGER NOT NULL REFERENCES ventes_produits(id),
+    montant_paye DECIMAL(15, 2) NOT NULL,
+    date_paiement DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 

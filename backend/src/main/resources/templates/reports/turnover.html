@@ -3,27 +3,460 @@
 <head>
     <title>Chiffre d'affaires</title>
     <style>
-        .list-header { background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .list-header h2 { margin: 0; font-size: 2rem; font-weight: 700; }
-        .filter-bar { background: white; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-        .card-metric { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); padding: 1.25rem; height: 100%; }
-        .card-metric .label { color: #6c757d; font-size: .9rem; }
-        .card-metric .value { font-size: 1.6rem; font-weight: 700; }
-        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .progress-sm { height: 8px; border-radius: 4px; }
-        .badge-taux { font-size: 0.75rem; padding: 4px 8px; }
-        .section-title { font-size: 1.25rem; font-weight: 600; color: #333; margin: 2rem 0 1rem; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; display: inline-block; }
+        /* === PAGE SPECIFIC STYLES === */
+        .page-header {
+            background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .page-header h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white !important;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .page-header p {
+            margin: 0;
+            opacity: 0.85;
+            font-size: 0.9375rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* === FILTER BAR === */
+        .filter-section {
+            background: #fefcf7;
+            border: 1px solid #e5d5bc;
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* === CA METRIC CARDS === */
+        .ca-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .ca-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .ca-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .ca-card {
+            background: #fefcf7;
+            border: 1px solid #e5d5bc;
+            border-radius: 14px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .ca-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(139, 101, 58, 0.12);
+        }
+        
+        .ca-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+        
+        .ca-card.tickets::before { background: linear-gradient(180deg, #1565c0, #2196f3); }
+        .ca-card.pub::before { background: linear-gradient(180deg, #e65100, #ff9800); }
+        .ca-card.produits::before { background: linear-gradient(180deg, #2d6a4f, #40916c); }
+        .ca-card.total::before { background: linear-gradient(180deg, #2d7a32, #4caf50); }
+        
+        .ca-card.total {
+            background: linear-gradient(135deg, rgba(45, 122, 50, 0.08) 0%, rgba(76, 175, 80, 0.08) 100%);
+            border-color: #2d7a32;
+        }
+        
+        .ca-card-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b4e37;
+            margin-bottom: 0.75rem;
+        }
+        
+        .ca-card-label i {
+            font-size: 1rem;
+        }
+        
+        .ca-card.tickets .ca-card-label i { color: #1565c0; }
+        .ca-card.pub .ca-card-label i { color: #e65100; }
+        .ca-card.produits .ca-card-label i { color: #2d6a4f; }
+        .ca-card.total .ca-card-label i { color: #2d7a32; }
+        
+        .ca-card-amount {
+            font-size: 1.75rem;
+            font-weight: 700;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+        
+        .ca-card.tickets .ca-card-amount { color: #1565c0; }
+        .ca-card.pub .ca-card-amount { color: #e65100; }
+        .ca-card.produits .ca-card-amount { color: #2d6a4f; }
+        .ca-card.total .ca-card-amount { color: #2d7a32; }
+        
+        .ca-card-desc {
+            font-size: 0.8125rem;
+            color: #a0886d;
+            line-height: 1.4;
+        }
+        
+        .ca-card-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #e5d5bc;
+        }
+        
+        .ca-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8125rem;
+            margin-bottom: 0.375rem;
+        }
+        
+        .ca-detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .ca-detail-label {
+            color: #6b4e37;
+        }
+        
+        .ca-detail-value {
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+        }
+        
+        .ca-detail-value.paid { color: #2d7a32; }
+        .ca-detail-value.remaining { color: #e65100; }
+        
+        /* === SUMMARY SECTION === */
+        .summary-section {
+            background: linear-gradient(135deg, #fefcf7 0%, #faf8f2 100%);
+            border: 1px solid #e5d5bc;
+            border-radius: 14px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+        
+        .summary-item {
+            padding: 0 1rem;
+            border-right: 1px solid #e5d5bc;
+        }
+        
+        .summary-item:last-child {
+            border-right: none;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-item {
+                border-right: none;
+                border-bottom: 1px solid #e5d5bc;
+                padding: 0 0 1.5rem 0;
+            }
+            .summary-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+        }
+        
+        .summary-title {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #a0886d;
+            margin-bottom: 0.75rem;
+        }
+        
+        .summary-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-amount.expected { color: #1565c0; }
+        .summary-amount.received { color: #2d7a32; }
+        .summary-amount.pending { color: #e65100; }
+        
+        .summary-desc {
+            font-size: 0.75rem;
+            color: #a0886d;
+        }
+        
+        /* === SECTION TITLES === */
+        .report-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2c1810;
+            margin: 2rem 0 1.25rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #2d6a4f;
+        }
+        
+        .report-section-title i {
+            color: #2d6a4f;
+        }
+        
+        /* === TABLE STYLES === */
+        .report-table-container {
+            background: #fefcf7;
+            border: 1px solid #e5d5bc;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .report-table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+        }
+        
+        .report-table thead th {
+            background: linear-gradient(135deg, #faf8f2 0%, #f9f6ef 100%);
+            padding: 1rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #2c1810;
+            border-bottom: 2px solid #e5d5bc;
+            white-space: nowrap;
+        }
+        
+        .report-table tbody td {
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            color: #6b4e37;
+            border-bottom: 1px solid #f0e6d2;
+            vertical-align: middle;
+        }
+        
+        .report-table tbody tr:hover {
+            background: linear-gradient(135deg, #faf8f2 0%, #fefcf7 100%);
+        }
+        
+        .report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .report-table .amount {
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            font-weight: 600;
+            text-align: right;
+        }
+        
+        .report-table .amount-info { color: #1565c0; }
+        .report-table .amount-warning { color: #e65100; }
+        .report-table .amount-success { color: #2d7a32; }
+        
+        .report-table tfoot {
+            background: linear-gradient(135deg, #f9f6ef 0%, #faf8f2 100%);
+        }
+        
+        .report-table tfoot td {
+            padding: 1.25rem;
+            font-weight: 700;
+            border-top: 2px solid #e5d5bc;
+            color: #2c1810;
+        }
+        
+        /* === BOTTOM STATS === */
+        .bottom-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 992px) {
+            .bottom-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .bottom-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .bottom-stat-card {
+            background: linear-gradient(135deg, #fefcf7 0%, #faf8f2 100%);
+            border: 1px solid #e5d5bc;
+            border-radius: 14px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bottom-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        
+        .bottom-stat-card:nth-child(1)::before { background: linear-gradient(90deg, #2d7a32, #4caf50); }
+        .bottom-stat-card:nth-child(2)::before { background: linear-gradient(90deg, #1565c0, #2196f3); }
+        .bottom-stat-card:nth-child(3)::before { background: linear-gradient(90deg, #6b4e37, #a0886d); }
+        .bottom-stat-card:nth-child(4)::before { background: linear-gradient(90deg, #e65100, #ff9800); }
+        
+        .bottom-stat-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #a0886d;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .bottom-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            color: #2c1810;
+            margin-bottom: 0.5rem;
+        }
+        
+        .bottom-stat-desc {
+            font-size: 0.75rem;
+            color: #a0886d;
+        }
+        
+        .progress-sm { 
+            height: 8px; 
+            border-radius: 4px;
+            background: #e5d5bc;
+            margin-top: 0.75rem;
+        }
+        
+        .progress-sm .progress-bar {
+            border-radius: 4px;
+        }
+        
+        .badge-taux { 
+            font-size: 0.75rem; 
+            padding: 0.375rem 0.625rem;
+            border-radius: 6px;
+        }
+        
+        /* === TWO COLUMN TABLES === */
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .two-col-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .table-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e5d5bc;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .table-header h5 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c1810;
+        }
+        
+        .table-header i {
+            color: #2d6a4f;
+            font-size: 1.125rem;
+        }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="container-fluid">
-        <div class="list-header">
+        <!-- Page Header -->
+        <div class="page-header">
             <h2><i class="bi bi-bar-chart-line-fill me-2"></i>Chiffre d'affaires</h2>
-            <div class="opacity-75 mt-2">Filtrer par date et consulter le CA par voiture et par voyage.</div>
+            <p>Filtrer par date et consulter le CA par voiture et par voyage.</p>
         </div>
 
-        <div class="filter-bar">
+        <!-- Filter Section -->
+        <div class="filter-section">
             <form method="get" action="/reports/turnover" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">Du</label>
@@ -48,43 +481,98 @@
             </form>
         </div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-cash-coin me-2"></i>Total CA (réservations)</div>
-                    <div class="value" th:text="${#numbers.formatDecimal(totalCA, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1" th:text="'Période: ' + ${from} + ' → ' + ${to}">Période</div>
+        <!-- CA Cards Grid -->
+        <div class="ca-grid">
+            <!-- CA Tickets -->
+            <div class="ca-card tickets">
+                <div class="ca-card-label">
+                    <i class="bi bi-ticket-detailed"></i>
+                    CA Tickets
+                </div>
+                <div class="ca-card-amount" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="ca-card-desc">Ventes de billets (encaissé)</div>
+            </div>
+            
+            <!-- CA Publicité -->
+            <div class="ca-card pub">
+                <div class="ca-card-label">
+                    <i class="bi bi-megaphone"></i>
+                    CA Publicité
+                </div>
+                <div class="ca-card-amount" th:text="${#numbers.formatDecimal(totalCAPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="ca-card-details">
+                    <div class="ca-detail-row">
+                        <span class="ca-detail-label">Payé</span>
+                        <span class="ca-detail-value paid" th:text="${#numbers.formatDecimal(totalCAPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</span>
+                    </div>
+                    <div class="ca-detail-row">
+                        <span class="ca-detail-label">Restant</span>
+                        <span class="ca-detail-value remaining" th:text="${#numbers.formatDecimal(totalCAPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</span>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-ticket-detailed me-2 text-info"></i>CA Tickets</div>
-                    <div class="value text-info" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1">Ventes de billets</div>
+            
+            <!-- CA Produits -->
+            <div class="ca-card produits">
+                <div class="ca-card-label">
+                    <i class="bi bi-box-seam"></i>
+                    CA Produits Extra
+                </div>
+                <div class="ca-card-amount" th:text="${#numbers.formatDecimal(totalCAProduits, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="ca-card-details">
+                    <div class="ca-detail-row">
+                        <span class="ca-detail-label">Payé</span>
+                        <span class="ca-detail-value paid" th:text="${#numbers.formatDecimal(totalCAProduitsPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</span>
+                    </div>
+                    <div class="ca-detail-row">
+                        <span class="ca-detail-label">Restant</span>
+                        <span class="ca-detail-value remaining" th:text="${#numbers.formatDecimal(totalCAProduits - totalCAProduitsPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</span>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-megaphone me-2 text-warning"></i>CA Publicité</div>
-                    <div class="value text-warning" th:text="${#numbers.formatDecimal(totalCAPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1">Diffusions publicitaires</div>
+            
+            <!-- CA Total Encaissé -->
+            <div class="ca-card total">
+                <div class="ca-card-label">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    CA Total Encaissé
                 </div>
+                <div class="ca-card-amount" th:text="${#numbers.formatDecimal(caTotalGlobalComplet, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="ca-card-desc">Tickets + Pub Payé + Produits Payé</div>
             </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-graph-up me-2 text-success"></i>CA Total Global</div>
-                    <div class="value text-success" th:text="${#numbers.formatDecimal(totalCAGlobal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1">Tickets + Publicité</div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-title">CA Total Facturé (Attendu)</div>
+                    <div class="summary-amount expected" th:text="${#numbers.formatDecimal(totalCATickets + totalCAPub + totalCAProduits, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="summary-desc">Tickets + Pub dû + Produits dû</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-title">CA Total Encaissé (Payé)</div>
+                    <div class="summary-amount received" th:text="${#numbers.formatDecimal(caTotalGlobalComplet, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="summary-desc">Tickets + Pub payé + Produits payé</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-title">Reste à Encaisser</div>
+                    <div class="summary-amount pending" th:text="${#numbers.formatDecimal((totalCAPub - totalCAPubPaye) + (totalCAProduits - totalCAProduitsPaye), 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                    <div class="summary-desc">Pub restant + Produits restant</div>
                 </div>
             </div>
         </div>
 
-        <!-- Section CA par Voyage (Tickets + Pub) - Selon le sujet -->
-        <h4 class="section-title"><i class="bi bi-cash-stack me-2"></i>Chiffre d'affaires par Voyage</h4>
-        <div class="table-container mb-4">
+        <!-- CA par Voyage -->
+        <div class="report-section-title">
+            <i class="bi bi-cash-stack"></i>
+            Chiffre d'affaires par Voyage
+        </div>
+        
+        <div class="report-table-container">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table class="report-table">
+                    <thead>
                     <tr>
                         <th>Gare départ</th>
                         <th>Gare arrivée</th>
@@ -100,7 +588,7 @@
                     </thead>
                     <tbody>
                     <tr th:if="${voyagesCAComplet == null || voyagesCAComplet.isEmpty()}">
-                        <td colspan="8" class="text-center text-muted py-4">Aucun voyage pour la période.</td>
+                        <td colspan="10" class="text-center text-muted py-4">Aucun voyage pour la période.</td>
                     </tr>
                     <tr th:each="v : ${voyagesCAComplet}">
                         <td th:text="${v.gareDepart}">-</td>
@@ -108,77 +596,87 @@
                         <td><span class="fw-semibold" th:text="${v.immatriculation}">-</span></td>
                         <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'dd/MM/yyyy') : ''}">-</td>
                         <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'HH:mm') : ''}">-</td>
-                        <td class="text-end text-info" th:text="${#numbers.formatDecimal(v.caTickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end text-warning" th:text="${#numbers.formatDecimal(v.caPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end text-success" th:text="${#numbers.formatDecimal(v.caPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end" th:classappend="${v.caPubRestant.compareTo(T(java.math.BigDecimal).ZERO) <= 0 ? 'text-success' : 'text-warning'}" th:text="${#numbers.formatDecimal(v.caPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end fw-semibold text-success" th:text="${#numbers.formatDecimal(v.caTotal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-info" th:text="${#numbers.formatDecimal(v.caTickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-warning" th:text="${#numbers.formatDecimal(v.caPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-success" th:text="${#numbers.formatDecimal(v.caPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount" th:classappend="${v.caPubRestant.compareTo(T(java.math.BigDecimal).ZERO) <= 0 ? 'amount-success' : 'amount-warning'}" th:text="${#numbers.formatDecimal(v.caPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-success" th:text="${#numbers.formatDecimal(v.caTotal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
                     </tr>
                     </tbody>
-                    <tfoot class="table-light">
+                    <tfoot>
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Total:</td>
-                        <td class="text-end text-info fw-bold" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end text-warning fw-bold" th:text="${#numbers.formatDecimal(totalCAPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end text-success fw-bold" th:text="${#numbers.formatDecimal(totalCAPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(totalCAPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end text-success fw-bold" th:text="${#numbers.formatDecimal(totalCAGlobal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td colspan="5" class="text-end">Total:</td>
+                        <td class="amount amount-info" th:text="${#numbers.formatDecimal(totalCATickets, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-warning" th:text="${#numbers.formatDecimal(totalCAPub, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-success" th:text="${#numbers.formatDecimal(totalCAPubPaye, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount" th:text="${#numbers.formatDecimal(totalCAPubRestant, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-success" th:text="${#numbers.formatDecimal(totalCAGlobal, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
                     </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <!-- Cards supplémentaires pour CA Max -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-graph-up-arrow me-2 text-success"></i>CA Max Potentiel</div>
-                    <div class="value text-success" th:text="${#numbers.formatDecimal(totalCAMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1">Si toutes les places étaient vendues</div>
+        <!-- Bottom Stats -->
+        <div class="bottom-stats-grid">
+            <div class="bottom-stat-card">
+                <div class="bottom-stat-label">
+                    <i class="bi bi-graph-up-arrow text-success"></i>
+                    CA Max Potentiel
+                </div>
+                <div class="bottom-stat-value" th:text="${#numbers.formatDecimal(totalCAMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="bottom-stat-desc">Si toutes les places étaient vendues</div>
+            </div>
+            
+            <div class="bottom-stat-card">
+                <div class="bottom-stat-label">
+                    <i class="bi bi-percent text-primary"></i>
+                    Taux de Remplissage Global
+                </div>
+                <div class="bottom-stat-value" th:classappend="${tauxGlobal >= 80 ? 'text-success' : (tauxGlobal >= 50 ? 'text-warning' : 'text-danger')}" th:text="${tauxGlobal} + '%'">0%</div>
+                <div class="progress progress-sm">
+                    <div class="progress-bar" role="progressbar" 
+                         th:style="'width: ' + ${tauxGlobal} + '%'"
+                         th:classappend="${tauxGlobal >= 80 ? 'bg-success' : (tauxGlobal >= 50 ? 'bg-warning' : 'bg-danger')}"></div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-percent me-2 text-primary"></i>Taux de remplissage global</div>
-                    <div class="value" th:classappend="${tauxGlobal >= 80 ? 'text-success' : (tauxGlobal >= 50 ? 'text-warning' : 'text-danger')}" 
-                         th:text="${tauxGlobal} + '%'">0%</div>
-                    <div class="progress progress-sm mt-2">
-                        <div class="progress-bar" role="progressbar" 
-                             th:style="'width: ' + ${tauxGlobal} + '%'"
-                             th:classappend="${tauxGlobal >= 80 ? 'bg-success' : (tauxGlobal >= 50 ? 'bg-warning' : 'bg-danger')}"></div>
-                    </div>
+            
+            <div class="bottom-stat-card">
+                <div class="bottom-stat-label">
+                    <i class="bi bi-map"></i>
+                    Voyages (dans la période)
                 </div>
+                <div class="bottom-stat-value" th:text="${voyagesCount}">0</div>
+                <div class="bottom-stat-desc">Groupé par voyage</div>
             </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-map me-2"></i>Voyages (dans la période)</div>
-                    <div class="value" th:text="${voyagesCount}">0</div>
-                    <div class="text-muted mt-1">Groupé par voyage</div>
+            
+            <div class="bottom-stat-card">
+                <div class="bottom-stat-label">
+                    <i class="bi bi-cash-coin text-warning"></i>
+                    CA Réel Total
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card-metric">
-                    <div class="label"><i class="bi bi-cash-coin me-2"></i>CA Réel Total</div>
-                    <div class="value" th:text="${#numbers.formatDecimal(totalCAReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
-                    <div class="text-muted mt-1">Ventes réelles</div>
-                </div>
+                <div class="bottom-stat-value" th:text="${#numbers.formatDecimal(totalCAReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</div>
+                <div class="bottom-stat-desc">Ventes réelles</div>
             </div>
         </div>
 
-        <!-- Section CA Max par Voyage -->
-        <h4 class="section-title"><i class="bi bi-speedometer2 me-2"></i>CA Max vs CA Réel par Voyage</h4>
-        <div class="table-container mb-4">
+        <!-- CA Max vs Réel -->
+        <div class="report-section-title">
+            <i class="bi bi-speedometer2"></i>
+            CA Max vs CA Réel par Voyage
+        </div>
+        
+        <div class="report-table-container">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table class="report-table">
+                    <thead>
                     <tr>
                         <th>Voiture</th>
                         <th>Trajet</th>
                         <th>Date départ</th>
                         <th class="text-end">CA Max</th>
                         <th class="text-end">CA Réel</th>
-                        <th style="width: 180px;">Taux remplissage</th>
+                        <th style="width: 200px;">Taux remplissage</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -186,13 +684,11 @@
                         <td colspan="6" class="text-center text-muted py-4">Aucun voyage pour la période.</td>
                     </tr>
                     <tr th:each="v : ${voyagesCAMax}">
-                        <td>
-                            <span class="fw-semibold" th:text="${v.immatriculation}">-</span>
-                        </td>
+                        <td><span class="fw-semibold" th:text="${v.immatriculation}">-</span></td>
                         <td th:text="${v.trajetNom}">-</td>
                         <td th:text="${v.dateDepart != null ? #temporals.format(v.dateDepart, 'dd/MM/yyyy HH:mm') : ''}">-</td>
-                        <td class="text-end text-success fw-semibold" th:text="${#numbers.formatDecimal(v.caMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
-                        <td class="text-end" th:text="${#numbers.formatDecimal(v.caReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount amount-success" th:text="${#numbers.formatDecimal(v.caMax, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
+                        <td class="amount" th:text="${#numbers.formatDecimal(v.caReel, 1, 'COMMA', 0, 'POINT')} + ' Ar'">0 Ar</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <div class="progress progress-sm flex-grow-1">
@@ -211,64 +707,63 @@
             </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-12 col-xl-6">
-                <div class="table-container">
-                    <div class="p-3 border-bottom">
-                        <h5 class="mb-0"><i class="bi bi-bus-front-fill me-2"></i>CA par voiture et par jour</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                            <tr>
-                                <th>Voiture</th>
-                                <th>Jour</th>
-                                <th class="text-end">CA</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:if="${taxiDaily == null || taxiDaily.isEmpty()}">
-                                <td colspan="3" class="text-center text-muted py-4">Aucune donnée pour la période.</td>
-                            </tr>
-                            <tr th:each="row : ${taxiDaily}">
-                                <td th:text="${row.immatriculation}">-</td>
-                                <td th:text="${row.jour != null ? #temporals.format(row.jour, 'dd/MM/yyyy') : ''}"></td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(row.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- Two Column Tables -->
+        <div class="two-col-grid">
+            <div class="report-table-container">
+                <div class="table-header">
+                    <i class="bi bi-bus-front-fill"></i>
+                    <h5>CA par voiture et par jour</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                        <tr>
+                            <th>Voiture</th>
+                            <th>Jour</th>
+                            <th class="text-end">CA</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${taxiDaily == null || taxiDaily.isEmpty()}">
+                            <td colspan="3" class="text-center text-muted py-4">Aucune donnée pour la période.</td>
+                        </tr>
+                        <tr th:each="row : ${taxiDaily}">
+                            <td th:text="${row.immatriculation}">-</td>
+                            <td th:text="${row.jour != null ? #temporals.format(row.jour, 'dd/MM/yyyy') : ''}"></td>
+                            <td class="amount" th:text="${#numbers.formatDecimal(row.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="col-12 col-xl-6">
-                <div class="table-container">
-                    <div class="p-3 border-bottom">
-                        <h5 class="mb-0"><i class="bi bi-map-fill me-2"></i>CA par trajet</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                            <tr>
-                                <th>Trajet</th>
-                                <th class="text-end">Réservations</th>
-                                <th class="text-end">CA</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:if="${trajets == null || trajets.isEmpty()}">
-                                <td colspan="3" class="text-center text-muted py-4">Aucun trajet pour la période.</td>
-                            </tr>
-                            <tr th:each="t : ${trajetsCA}">
-                                <td>
-                                    <div class="fw-semibold" th:text="${t.trajetNom != null ? t.trajetNom : 'Trajet #' + t.trajetId}">Trajet</div>
-                                </td>
-                                <td class="text-end" th:text="${t.reservationCount}">0</td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(t.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="report-table-container">
+                <div class="table-header">
+                    <i class="bi bi-map-fill"></i>
+                    <h5>CA par trajet</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                        <tr>
+                            <th>Trajet</th>
+                            <th class="text-end">Réservations</th>
+                            <th class="text-end">CA</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${trajets == null || trajets.isEmpty()}">
+                            <td colspan="3" class="text-center text-muted py-4">Aucun trajet pour la période.</td>
+                        </tr>
+                        <tr th:each="t : ${trajetsCA}">
+                            <td>
+                                <div class="fw-semibold" th:text="${t.trajetNom != null ? t.trajetNom : 'Trajet #' + t.trajetId}">Trajet</div>
+                            </td>
+                            <td class="text-end" th:text="${t.reservationCount}">0</td>
+                            <td class="amount" th:text="${#numbers.formatDecimal(t.total, 1, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
