@@ -34,8 +34,18 @@ public class VenteProduitController {
             Model model) {
 
         LocalDate today = LocalDate.now();
-        LocalDate fromDate = (from != null) ? from : today.withDayOfMonth(1);
-        LocalDate toDate = (to != null) ? to : today;
+        LocalDate fromDate;
+        LocalDate toDate;
+
+        // Si l'utilisateur a fourni une période, l'utiliser (support des bornes manquantes)
+        if (from != null || to != null) {
+            fromDate = (from != null) ? from : LocalDate.of(1970, 1, 1);
+            toDate = (to != null) ? to : today;
+        } else {
+            // Par défaut afficher les 90 derniers jours pour couvrir les ventes proches des changements de mois
+            fromDate = today.minusDays(90);
+            toDate = today;
+        }
 
         List<VenteProduit> ventes = venteProduitService.findByPeriode(fromDate, toDate);
 
