@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS paiements_annonceurs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
+        
 -- MIGRATION: add `passager_categorie` to existing databases and backfill from `is_enfant`.
 -- Run these statements once against your existing database (psql or migration tool):
 -- Add column if not exists (keeps default for new rows)
